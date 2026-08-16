@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 const migration = readFileSync(new URL('../../supabase/migrations/202608160001_release_1_foundation.sql', import.meta.url), 'utf8')
 const auditRepair = readFileSync(new URL('../../supabase/migrations/202608160002_fix_audit_trigger_generic_records.sql', import.meta.url), 'utf8')
+const programCategoryRepair = readFileSync(new URL('../../supabase/migrations/202608160003_add_program_category.sql', import.meta.url), 'utf8')
 
 describe('Release 1 migration security contract', () => {
   it.each(['tenant_branding', 'tenant_memberships', 'buyers', 'programs', 'offers', 'buyer_offers', 'leads', 'lead_identity', 'lead_attributes', 'integrations', 'tenant_settings', 'feature_flags'])(
@@ -32,5 +33,9 @@ describe('Release 1 migration security contract', () => {
     expect(auditRepair).toContain("old_data->>'role'")
     expect(auditRepair).toContain("new_data->>'status'")
     expect(auditRepair).not.toMatch(/\bold\.role\b|\bnew\.role\b|\bold\.status\b|\bnew\.status\b/i)
+  })
+
+  it('repairs staging program schemas missing the category field', () => {
+    expect(programCategoryRepair).toMatch(/alter table public\.programs[\s\S]*add column if not exists category text not null default 'General'/i)
   })
 })

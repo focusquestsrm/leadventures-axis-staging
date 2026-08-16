@@ -77,6 +77,10 @@ const state = structuredClone(initialSnapshot)
 const delay = (ms = 180) => new Promise((resolve) => setTimeout(resolve, ms))
 const auditDemo = (tenantId: string, eventType: string, entityType: string, entityId: string) => state.auditEvents.unshift({ id: crypto.randomUUID(), tenantId, actor: state.user.name, eventType, entityType, entityId, occurredAt: new Date().toISOString() })
 const requireDemoTenant = (tenantId: string) => { if (!state.tenants.some((item) => item.id === tenantId)) throw new Error('The authorized tenant was not found.') }
+const requireQuery = (operation: string, result: { error: { code?: string; message: string } | null }) => {
+  if (!result.error) return
+  throw Object.assign(new Error(result.error.message), { code: result.error.code ?? 'UNKNOWN', operation })
+}
 
 export interface BuyerInput { id?: string; tenantId: string; name: string; externalReference: string; notes: string; status: Buyer['status'] }
 export interface ProgramInput { id?: string; tenantId: string; name: string; code: string; category: string; status: Program['status'] }
@@ -94,8 +98,9 @@ export const platformService = {
         supabase.from('tenants').select('id,name,slug,status,plan,created_at').order('name'),
         supabase.from('tenant_memberships').select(membershipSelect),
       ])
-      const failure = [profileResult, tenantsResult, membershipsResult].find((result) => result.error)
-      if (failure?.error) throw failure.error
+      requireQuery('workspace.profile', profileResult)
+      requireQuery('workspace.tenants', tenantsResult)
+      requireQuery('workspace.memberships', membershipsResult)
       const profile = profileResult.data
       if (!profile) throw new Error('Authenticated profile was not found.')
       const tenantRows = tenantsResult.data ?? []
@@ -112,8 +117,13 @@ export const platformService = {
         supabase.from('tenant_settings').select('id,tenant_id,setting_key,setting_value').eq('tenant_id', activeTenantId).order('setting_key'),
         supabase.from('audit_events').select(auditEventSelect).eq('tenant_id', activeTenantId).order('occurred_at', { ascending: false }).limit(100),
       ])
-      const tenantFailure = [programsResult, leadsResult, buyersResult, offersResult, integrationsResult, settingsResult, auditResult].find((result) => result.error)
-      if (tenantFailure?.error) throw tenantFailure.error
+      requireQuery('workspace.programs', programsResult)
+      requireQuery('workspace.leads', leadsResult)
+      requireQuery('workspace.buyers', buyersResult)
+      requireQuery('workspace.offers', offersResult)
+      requireQuery('workspace.integrations', integrationsResult)
+      requireQuery('workspace.settings', settingsResult)
+      requireQuery('workspace.audit', auditResult)
       const relationName = (value: unknown) => Array.isArray(value) ? String(value[0]?.name ?? '') : String((value as { name?: string } | null)?.name ?? '')
       const relationDisplayName = (value: unknown) => Array.isArray(value) ? String(value[0]?.display_name ?? '') : String((value as { display_name?: string } | null)?.display_name ?? '')
       const relationCount = (value: unknown) => Array.isArray(value) ? Number(value[0]?.count ?? 0) : 0

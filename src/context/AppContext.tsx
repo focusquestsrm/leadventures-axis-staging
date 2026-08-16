@@ -19,19 +19,22 @@ const AppContext = createContext<AppContextValue | null>(null)
 export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PlatformSnapshot | null>(null)
   const [tenantId, setTenantId] = useState<string>('')
-  const [error, setError] = useState<string>('')
+  const [error, setError] = useState<{ message: string; reference: string } | null>(null)
   const [authReady, setAuthReady] = useState(demoMode)
   const [authenticated, setAuthenticated] = useState(demoMode)
 
   const refresh = useCallback(async (requestedTenantId?: string) => {
     try {
-      setError('')
+      setError(null)
       const next = await platformService.getSnapshot(requestedTenantId || undefined)
       setData(next)
       setTenantId((current) => current || next.tenants.find((tenant) => next.memberships.some((m) => m.tenantId === tenant.id && m.userId === next.user.id))?.id || '')
     } catch (caught) {
-      logWorkspaceDiagnostic(requestedTenantId ? 'workspace.refresh' : 'workspace.initialize', caught)
-      setError('Axis could not load your workspace. Please try again.')
+      const diagnostic = logWorkspaceDiagnostic(requestedTenantId ? 'workspace.refresh' : 'workspace.initialize', caught)
+      setError({
+        message: 'Axis could not load your workspace. Please try again.',
+        reference: `${diagnostic.operation} · ${diagnostic.code}`,
+      })
     }
   }, [])
 
@@ -66,7 +69,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   if (!authReady) return <div className="center-state"><div className="loader" /><p>Checking your secure session…</p></div>
   if (!demoMode && !supabase) return <div className="center-state"><h1>Connect Axis to continue</h1><p>Configure the Supabase staging environment variables.</p></div>
   if (!authenticated) return <SignIn />
-  if (error) return <div className="center-state"><h1>Unable to load Axis</h1><p>{error}</p><button onClick={() => void refresh()}>Try again</button></div>
+  if (error) return <div className="center-state"><h1>Unable to load Axis</h1><p>{error.message}</p><small>Diagnostic: {error.reference}</small><button onClick={() => void refresh()}>Try again</button></div>
   if (!value) return <div className="center-state" aria-live="polite"><div className="loader" /><p>Securing your workspace…</p></div>
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

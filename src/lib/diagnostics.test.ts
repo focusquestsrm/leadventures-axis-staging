@@ -13,4 +13,20 @@ describe('safe workspace diagnostics', () => {
       message: '[redacted email] [redacted token] relationship ambiguous',
     })
   })
+
+  it('uses the failing query operation when one is provided', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const diagnostic = logWorkspaceDiagnostic('workspace.initialize', {
+      operation: 'workspace.programs',
+      code: '42703',
+      message: 'column programs.category does not exist',
+    })
+
+    expect(diagnostic).toEqual({
+      operation: 'workspace.programs',
+      code: '42703',
+      message: 'column programs.category does not exist',
+    })
+    expect(consoleError).toHaveBeenCalledWith('[Axis] Workspace operation failed', diagnostic)
+  })
 })
