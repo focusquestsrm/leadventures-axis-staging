@@ -3,6 +3,7 @@ import { can } from '../lib/rbac'
 import { demoMode, supabase } from '../lib/supabase'
 import { platformService, type PlatformSnapshot } from '../services/platformService'
 import type { Permission, Role, Tenant } from '../types'
+import { logWorkspaceDiagnostic } from '../lib/diagnostics'
 
 interface AppContextValue {
   data: PlatformSnapshot
@@ -28,7 +29,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const next = await platformService.getSnapshot(requestedTenantId || undefined)
       setData(next)
       setTenantId((current) => current || next.tenants.find((tenant) => next.memberships.some((m) => m.tenantId === tenant.id && m.userId === next.user.id))?.id || '')
-    } catch {
+    } catch (caught) {
+      logWorkspaceDiagnostic(requestedTenantId ? 'workspace.refresh' : 'workspace.initialize', caught)
       setError('Axis could not load your workspace. Please try again.')
     }
   }, [])

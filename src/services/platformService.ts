@@ -1,6 +1,7 @@
 import type { AuditEvent, Buyer, Integration, Lead, Membership, Offer, Program, SessionUser, Tenant, TenantRole, TenantSetting } from '../types'
 import { demoMode, supabase } from '../lib/supabase'
 import { isTenantAssignableRole } from '../lib/rbac'
+import { auditEventSelect, membershipSelect } from './queryContracts'
 
 export interface PlatformSnapshot {
   user: SessionUser
@@ -91,7 +92,7 @@ export const platformService = {
       const [profileResult, tenantsResult, membershipsResult] = await Promise.all([
         supabase.from('profiles').select('display_name,is_platform_admin').eq('id', auth.user.id).single(),
         supabase.from('tenants').select('id,name,slug,status,plan,created_at').order('name'),
-        supabase.from('tenant_memberships').select('id,tenant_id,user_id,role,status,profiles(display_name)'),
+        supabase.from('tenant_memberships').select(membershipSelect),
       ])
       const failure = [profileResult, tenantsResult, membershipsResult].find((result) => result.error)
       if (failure?.error) throw failure.error
@@ -109,7 +110,7 @@ export const platformService = {
         supabase.from('offers').select('id,tenant_id,name,status,program_id,programs(name),buyer_offers(count)').eq('tenant_id', activeTenantId).order('name'),
         supabase.from('integrations').select('id,tenant_id,name,kind,status,updated_at').eq('tenant_id', activeTenantId).order('name'),
         supabase.from('tenant_settings').select('id,tenant_id,setting_key,setting_value').eq('tenant_id', activeTenantId).order('setting_key'),
-        supabase.from('audit_events').select('id,tenant_id,event_type,entity_type,entity_id,occurred_at,profiles(display_name)').eq('tenant_id', activeTenantId).order('occurred_at', { ascending: false }).limit(100),
+        supabase.from('audit_events').select(auditEventSelect).eq('tenant_id', activeTenantId).order('occurred_at', { ascending: false }).limit(100),
       ])
       const tenantFailure = [programsResult, leadsResult, buyersResult, offersResult, integrationsResult, settingsResult, auditResult].find((result) => result.error)
       if (tenantFailure?.error) throw tenantFailure.error
@@ -119,14 +120,14 @@ export const platformService = {
       return {
         user: { id: auth.user.id, name: profile.display_name, email: auth.user.email ?? '', isPlatformAdmin: profile.is_platform_admin },
         tenants: tenantRows.map((row) => ({ id: row.id, name: row.name, slug: row.slug, status: row.status, plan: row.plan, createdAt: row.created_at })),
-        memberships: membershipRows.map((row) => ({ id: row.id, tenantId: row.tenant_id, userId: row.user_id, name: relationDisplayName(row.profiles) || 'Axis user', email: row.user_id === auth.user.id ? auth.user.email ?? '' : 'Protected account', role: row.role as TenantRole, status: row.status as Membership['status'] })),
+        memberships: membershipRows.map((row) => ({ id: row.id, tenantId: row.tenant_id, userId: row.user_id, name: relationDisplayName(row.member_profile) || 'Axis user', email: row.user_id === auth.user.id ? auth.user.email ?? '' : 'Protected account', role: row.role as TenantRole, status: row.status as Membership['status'] })),
         programs: (programsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, name: row.name, code: row.code, category: row.category ?? '', status: row.status as Program['status'] })),
         leads: (leadsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, reference: row.reference, programId: row.program_id, program: relationName(row.programs) || 'Unassigned', source: row.source ?? 'Unknown', status: row.status as Lead['status'], score: Number(row.lead_score ?? 0), createdAt: row.created_at })),
         buyers: (buyersResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, name: row.name, externalReference: row.external_reference ?? '', notes: String((row.metadata as { notes?: string } | null)?.notes ?? ''), status: row.status === 'paused' ? 'paused' : 'active', offers: relationCount(row.buyer_offers), updatedAt: row.updated_at })),
         offers: (offersResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, name: row.name, programId: row.program_id, program: relationName(row.programs) || 'Unassigned', status: row.status as Offer['status'], buyerCount: relationCount(row.buyer_offers) })),
         integrations: (integrationsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, name: row.name, kind: row.kind, status: row.status as Integration['status'], updatedAt: row.updated_at })),
         tenantSettings: (settingsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, key: row.setting_key, value: String((row.setting_value as { value?: unknown } | null)?.value ?? '') })),
-        auditEvents: (auditResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, actor: relationDisplayName(row.profiles) || 'System', eventType: row.event_type, entityType: row.entity_type, entityId: row.entity_id ?? '', occurredAt: row.occurred_at })),
+        auditEvents: (auditResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, actor: relationDisplayName(row.actor_profile) || 'System', eventType: row.event_type, entityType: row.entity_type, entityId: row.entity_id ?? '', occurredAt: row.occurred_at })),
       }
     }
     await delay()
