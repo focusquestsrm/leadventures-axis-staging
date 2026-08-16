@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const migration = readFileSync(new URL('../../supabase/migrations/202608160004_release_2_lead_ecosystem.sql', import.meta.url), 'utf8').toLowerCase()
+const release1Migration = readFileSync(new URL('../../supabase/migrations/202608160001_release_1_foundation.sql', import.meta.url), 'utf8').toLowerCase()
 const r2Tables = ['traffic_sources','campaigns','buyer_programs','offer_programs','buyer_rules','buyer_caps','lead_deliveries','lead_delivery_attempts','lead_rejections','lead_status_history']
 
 describe('Release 2 database contract', () => {
@@ -38,6 +39,18 @@ describe('Release 2 database contract', () => {
     expect(migration).toContain('axis_enforce_r2_tenant_fk')
     expect(migration).toContain("raise exception 'invalid tenant relationship'")
     for (const relation of ['traffic_sources','campaigns','leads','lead_deliveries','lead_delivery_attempts','buyers','programs','offers']) expect(migration).toContain(`from public.${relation}`)
+  })
+
+  it('names R2 tenant guard triggers without colliding with Release 1 triggers', () => {
+    expect(migration).toContain('create trigger r2_%i_tenant_fk')
+    expect(migration).not.toContain('create trigger %i_tenant_fk')
+
+    const release1TriggerNames = new Set(
+      [...release1Migration.matchAll(/create trigger\s+([a-z0-9_]+)/g)].map((match) => match[1]),
+    )
+    for (const table of [...r2Tables, 'leads']) {
+      expect(release1TriggerNames.has(`r2_${table}_tenant_fk`)).toBe(false)
+    }
   })
 
   it('keeps PII and raw delivery payloads out of operational tables', () => {

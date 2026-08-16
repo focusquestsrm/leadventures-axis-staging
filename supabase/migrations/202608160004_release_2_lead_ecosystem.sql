@@ -282,7 +282,7 @@ end $$;
 
 do $$ declare table_name text; begin
   foreach table_name in array array['traffic_sources','campaigns','leads','buyer_programs','offer_programs','buyer_rules','buyer_caps','lead_deliveries','lead_delivery_attempts','lead_rejections','lead_status_history'] loop
-    execute format('create trigger %I_tenant_fk before insert or update on public.%I for each row execute function public.axis_enforce_r2_tenant_fk()',table_name,table_name);
+    execute format('create trigger r2_%I_tenant_fk before insert or update on public.%I for each row execute function public.axis_enforce_r2_tenant_fk()',table_name,table_name);
   end loop;
 end $$;
 
