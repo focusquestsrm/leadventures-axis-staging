@@ -1,0 +1,19 @@
+import type { Permission, Role, TenantRole } from '../types'
+
+const grants: Record<Role, readonly Permission[]> = {
+  platform_admin: ['tenant:read', 'tenant:manage', 'membership:read', 'membership:manage', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'integration:read', 'integration:manage', 'audit:read', 'platform:manage'],
+  tenant_admin: ['tenant:read', 'tenant:manage', 'membership:read', 'membership:manage', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'integration:read', 'integration:manage', 'audit:read'],
+  manager: ['tenant:read', 'membership:read', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'integration:read', 'audit:read'],
+  media_buyer: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'integration:read'],
+  analyst: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'integration:read', 'audit:read'],
+  viewer: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'integration:read'],
+}
+
+export const can = (role: Role | undefined, permission: Permission, isPlatformAdmin = false) =>
+  (isPlatformAdmin && permission !== 'lead:identity:read') || (role ? grants[role].includes(permission) : false)
+
+export const tenantAssignableRoles: readonly TenantRole[] = ['tenant_admin', 'manager', 'media_buyer', 'analyst', 'viewer']
+
+export const isTenantAssignableRole = (value: string): value is TenantRole => tenantAssignableRoles.includes(value as TenantRole)
+
+export const roleLabel = (role: Role) => role.split('_').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ')
