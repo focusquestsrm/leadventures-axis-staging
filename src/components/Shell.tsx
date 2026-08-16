@@ -18,6 +18,11 @@ const recordsNav = [
   { to: '/buyers-offers', label: 'Buyers & Offers', icon: CircleDollarSign },
   { to: '/integrations', label: 'Integrations', icon: Plug },
 ]
+const intelligenceNav = [
+  { to: '/intelligence/buyers', label: 'Buyer Intelligence', icon: Users },
+  { to: '/intelligence/programs', label: 'Program Intelligence', icon: BarChart3 },
+  { to: '/intelligence/rejections', label: 'Rejection Intelligence', icon: Activity },
+]
 
 export function Shell({ children }: { children: ReactNode }) {
   const { data, tenant, role, setTenantId, allowed } = useApp()
@@ -38,6 +43,8 @@ export function Shell({ children }: { children: ReactNode }) {
         {primaryNav.map((item) => <NavItem {...item} key={item.to} onClick={() => setOpen(false)} />)}
         <span className="nav-heading">Registries</span>
         {recordsNav.map((item) => <NavItem {...item} key={item.to} onClick={() => setOpen(false)} />)}
+        <span className="nav-heading">Intelligence</span>
+        {intelligenceNav.map((item) => <NavItem {...item} key={item.to} onClick={() => setOpen(false)} />)}
         {(allowed('tenant:manage') || allowed('platform:manage')) && <><span className="nav-heading">Manage</span><NavItem to="/admin" label="Administration" icon={Settings} onClick={() => setOpen(false)} /></>}
       </nav>
       <div className="sidebar-footer"><ShieldCheck size={16} /><span>{demoMode ? 'Synthetic demo · staging' : 'Connected staging'}</span></div>

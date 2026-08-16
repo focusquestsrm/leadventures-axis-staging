@@ -3,6 +3,7 @@ import { demoMode, supabase } from '../lib/supabase'
 import { isTenantAssignableRole } from '../lib/rbac'
 import { auditEventSelect, membershipSelect } from './queryContracts'
 import { release2Demo } from '../data/release2Demo'
+import { release3Demo } from '../data/release3Demo'
 
 export interface PlatformSnapshot {
   user: SessionUser
@@ -53,6 +54,7 @@ const initialSnapshot: PlatformSnapshot = {
     { id: 'l3', tenantId: tenantA, reference: 'AX-20479', externalLeadId: 'SYN-LEAD-20479', trafficSourceId: 'ts2', campaignId: 'c2', programId: 'p3', offerId: 'o3', program: 'Psychology', source: 'Google', campaign: 'Psychology Programs', offer: 'Psychology Program Inquiry', status: 'delivering', score: 84, receivedAt: '2026-08-16T12:55:00.000Z', createdAt: '2026-08-16T12:55:00.000Z' },
     { id: 'l4', tenantId: tenantA, reference: 'AX-20478', externalLeadId: 'SYN-LEAD-20478', trafficSourceId: 'ts1', campaignId: 'c1', programId: 'p1', offerId: 'o1', program: 'Medical Assistant', source: 'Meta', campaign: 'Healthcare Careers', offer: 'Qualified Healthcare Inquiry', status: 'queued', score: 72, receivedAt: '2026-08-16T12:20:00.000Z', createdAt: '2026-08-16T12:20:00.000Z' },
     { id: 'l5', tenantId: tenantB, reference: 'AX-10012', externalLeadId: 'SYN-LEAD-10012', trafficSourceId: null, campaignId: null, programId: null, offerId: null, program: 'Unassigned', source: 'Organic', campaign: 'Unassigned', offer: 'Unassigned', status: 'new', score: 72, receivedAt: '2026-08-15T12:20:00.000Z', createdAt: '2026-08-15T12:20:00.000Z' },
+    ...release3Demo.leads,
   ],
   leadIdentities: release2Demo.leadIdentities,
   programs: [
@@ -73,10 +75,10 @@ const initialSnapshot: PlatformSnapshot = {
   buyerPrograms: release2Demo.buyerPrograms,
   buyerRules: release2Demo.buyerRules,
   buyerCaps: release2Demo.buyerCaps,
-  leadDeliveries: release2Demo.leadDeliveries,
-  deliveryAttempts: release2Demo.deliveryAttempts,
-  leadRejections: release2Demo.leadRejections,
-  leadStatusHistory: release2Demo.leadStatusHistory,
+  leadDeliveries: [...release2Demo.leadDeliveries, ...release3Demo.leadDeliveries],
+  deliveryAttempts: [...release2Demo.deliveryAttempts, ...release3Demo.deliveryAttempts],
+  leadRejections: [...release2Demo.leadRejections, ...release3Demo.leadRejections],
+  leadStatusHistory: [...release2Demo.leadStatusHistory, ...release3Demo.leadStatusHistory],
   integrations: [
     { id: 'i1', tenantId: tenantA, name: 'Inbound Lead API', kind: 'API', status: 'connected', updatedAt: now },
     { id: 'i2', tenantId: tenantA, name: 'Webhook Delivery', kind: 'Webhook', status: 'needs_attention', updatedAt: '2026-08-14T18:20:00.000Z' },

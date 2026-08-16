@@ -35,6 +35,14 @@ Release 2 extends safe audit capture to traffic sources, campaigns, buyer-progra
 - `analyst` and `viewer` remain read-only.
 - RLS is authoritative; client capability checks only shape the interface.
 
+## Release 3 intelligence security
+
+The `axis_intelligence_snapshot` RPC is read-only and `SECURITY INVOKER`, so table RLS continues to apply. It rejects unauthenticated callers and any tenant ID for which `axis_is_tenant_member` is false. Platform administrators receive only the intentionally authorized operational intelligence already allowed by the existing tenant helper; platform status still does not grant lead identity access.
+
+All tenant roles can consume approved read-only intelligence consistent with their existing operational read grants. No intelligence RPC exposes mutation operations. Viewer and analyst roles therefore cannot modify source data through analytics. Source/campaign filter options, aggregate counts, buyer/program labels, and drill-down identifiers all originate from the active tenant scope.
+
+The intelligence migration never queries `lead_identity` or identity attributes. Responses omit names, emails, phones, addresses, request bodies, tokens, and credentials. Operational lead IDs may be used for authorized drill-down; existing lead-detail permissions remain responsible for any separate identity lookup.
+
 Normal authenticated users receive no insert, update, or delete grant on `audit_events`; security-definer mutation triggers perform capture. Membership creation, role change, deactivation/reactivation, and removal receive distinct event types.
 
 Secret-bearing `.env*` files are ignored except `.env.example`. The anon key is intended for browser use and remains constrained by RLS. Never place service keys, JWT secrets, database passwords, or vendor credentials in client environment variables.

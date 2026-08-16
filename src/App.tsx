@@ -1,8 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppProvider, useApp } from './context/AppContext'
+import { IntelligenceProvider } from './context/IntelligenceContext'
 import { Shell } from './components/Shell'
-import { AdminPage, BuyersOffersPage, EnginePage, IntegrationsPage } from './pages'
-import { AcquireRegistryPage, BuyerDetailPage, BuyerEcosystemPanels, LeadDetailPage, LeadEcosystemPage, Release2OverviewPage, RouteOperationsPage } from './release2Pages'
+import { AdminPage, BuyersOffersPage, IntegrationsPage } from './pages'
+import { BuyerDetailPage, BuyerEcosystemPanels, LeadDetailPage, LeadEcosystemPage } from './release2Pages'
+import { AcquireIntelligencePage, BuyerIntelligencePage, ConvertIntelligencePage, IntelligenceOverviewPage, OptimizeIntelligencePage, ProgramIntelligencePage, RecoverIntelligencePage, RejectionIntelligencePage, RouteIntelligencePage } from './intelligencePages'
 
 function BuyersRelease2Page() { return <><BuyersOffersPage /><BuyerEcosystemPanels /></> }
 
@@ -13,12 +15,15 @@ function ProtectedAdmin() {
 
 function AppRoutes() {
   return <Shell><Routes>
-    <Route path="/" element={<Release2OverviewPage />} />
-    <Route path="/acquire" element={<AcquireRegistryPage />} />
-    <Route path="/convert" element={<EnginePage engine="Convert" />} />
-    <Route path="/route" element={<RouteOperationsPage />} />
-    <Route path="/recover" element={<EnginePage engine="Recover" />} />
-    <Route path="/optimize" element={<EnginePage engine="Optimize" />} />
+    <Route path="/" element={<IntelligenceOverviewPage />} />
+    <Route path="/acquire" element={<AcquireIntelligencePage />} />
+    <Route path="/convert" element={<ConvertIntelligencePage />} />
+    <Route path="/route" element={<RouteIntelligencePage />} />
+    <Route path="/recover" element={<RecoverIntelligencePage />} />
+    <Route path="/optimize" element={<OptimizeIntelligencePage />} />
+    <Route path="/intelligence/buyers" element={<BuyerIntelligencePage />} />
+    <Route path="/intelligence/programs" element={<ProgramIntelligencePage />} />
+    <Route path="/intelligence/rejections" element={<RejectionIntelligencePage />} />
     <Route path="/leads" element={<LeadEcosystemPage />} />
     <Route path="/leads/:leadId" element={<LeadDetailPage />} />
     <Route path="/buyers-offers" element={<BuyersRelease2Page />} />
@@ -29,4 +34,4 @@ function AppRoutes() {
   </Routes></Shell>
 }
 
-export function App() { return <AppProvider><AppRoutes /></AppProvider> }
+export function App() { return <AppProvider><IntelligenceProvider><AppRoutes /></IntelligenceProvider></AppProvider> }

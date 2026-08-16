@@ -32,6 +32,14 @@ Buyer operating data remains normalized: `buyer_programs` models eligibility, `b
 
 The Acquire, Convert, Route, Recover, and Optimize areas share tenant context, RBAC, audit, and registry foundations. Acquire and Route receive operational R2 views; Convert, Recover, and Optimize retain their forward-compatible foundations. `tenant_branding`, `tenant_settings`, and tenant-scoped `feature_flags` allow later commercialization and white labeling without customer-specific logic.
 
+## Release 3 intelligence layer
+
+`src/lib/metrics.ts` is the canonical metric vocabulary and deterministic calculation engine used by tests and synthetic demo mode. `src/services/intelligenceService.ts` is the data-access boundary. Connected staging calls `axis_intelligence_snapshot`; React components never query Supabase or independently define business metrics.
+
+`IntelligenceProvider` owns the active filter state and report lifecycle above the router, which preserves filters between intelligence views. Presentation components receive an `IntelligenceReport` containing aggregates and operational identifiers only.
+
+The database RPC aggregates current and previous periods, trends, source/campaign performance, buyer scorecards, program performance, rejections, recovery dimensions, capacity, and data-quality counts. Supporting indexes cover tenant/time and common dimension paths. This avoids transferring every lead or identity record to the browser and provides a stable boundary for scheduled reporting, forecasting, external APIs, and later AI consumers.
+
 ## Migration process
 
 Create forward-only, timestamped SQL migrations in `supabase/migrations`. Review every policy and tenant relationship before applying. Test locally with `supabase db reset`, then apply to the linked staging project with `supabase db push`. Never edit already-applied migration history.
