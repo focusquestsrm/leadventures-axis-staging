@@ -28,7 +28,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return <div className="app-shell">
     <aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>
-      <div className="brand"><div className="brand-mark">A</div><div><strong>LEAD VENTURES</strong><span>AXIS</span></div><button className="mobile-close" aria-label="Close menu" onClick={() => setOpen(false)}><X size={20} /></button></div>
+      <div className="brand"><div className="brand-mark" aria-hidden="true">LV</div><div className="brand-copy"><strong>Lead Ventures</strong><span>AXIS</span><small>Intelligence for Lead-Driven Growth</small></div><button className="mobile-close" aria-label="Close menu" onClick={() => setOpen(false)}><X size={20} /></button></div>
       <div className="tenant-switcher">
         <label htmlFor="tenant">Workspace</label>
         <div className="select-wrap"><Building2 size={17} /><select id="tenant" value={tenant.id} onChange={(event) => { setTenantId(event.target.value); setOpen(false) }}>{authorizedTenants.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown size={15} /></div>
