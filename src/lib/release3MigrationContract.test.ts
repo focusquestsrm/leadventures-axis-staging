@@ -9,5 +9,6 @@ describe('Release 3 database intelligence contract', () => {
   it('does not weaken or disable RLS', () => { expect(migration).not.toContain('disable row level security'); expect(migration).not.toContain('security definer\nset search_path=public\nas $$') })
   it('grants execution only to authenticated users', () => { expect(migration).toContain('grant execute on function public.axis_intelligence_snapshot'); expect(migration).toContain('to authenticated'); expect(migration).not.toContain('to anon') })
   it('contains database-side grouped metrics and supporting indexes', () => { for (const value of ['acceptancerate','rejectionrate','recoveryopportunity','averageresponsems','timeoutrate','capacityutilization','group by received_at::date','intelligence_idx']) expect(migration).toContain(value) })
+  it('uses a non-keyword alias for the daily trend dimension', () => { expect(migration).toContain('received_at::date as trend_day'); expect(migration).toContain("'label',t.trend_day"); expect(migration).not.toContain('received_at::date day') })
   it('keeps viewer access read only because the RPC contains no DML', () => expect(migration).not.toMatch(/\b(insert|update|delete|merge|truncate)\b/))
 })
