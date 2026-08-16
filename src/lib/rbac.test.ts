@@ -26,4 +26,18 @@ describe('centralized permissions', () => {
     expect(isTenantAssignableRole('platform_admin')).toBe(false)
     expect(isTenantAssignableRole('manager')).toBe(true)
   })
+
+  it('keeps viewers read-only across Release 2 capabilities', () => {
+    expect(can('viewer', 'delivery:read')).toBe(true)
+    expect(can('viewer', 'delivery:write')).toBe(false)
+    expect(can('viewer', 'capacity:write')).toBe(false)
+    expect(can('viewer', 'source:write')).toBe(false)
+  })
+
+  it('allows tenant admins to manage Release 2 resources and media buyers to manage acquisition registries only', () => {
+    expect(can('tenant_admin', 'delivery:write')).toBe(true)
+    expect(can('tenant_admin', 'capacity:write')).toBe(true)
+    expect(can('media_buyer', 'source:write')).toBe(true)
+    expect(can('media_buyer', 'delivery:write')).toBe(false)
+  })
 })

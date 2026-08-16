@@ -24,4 +24,27 @@ describe('tenant-scoped platform service', () => {
   it('rejects platform_admin as a tenant membership role at runtime', async () => {
     await expect(platformService.addMembership(alpha, crypto.randomUUID(), 'platform_admin' as never)).rejects.toThrow(/cannot be assigned/i)
   })
+
+  it('preserves multiple delivery attempts in attempt order', async () => {
+    const snapshot = await platformService.getSnapshot(alpha)
+    const attempts = snapshot.deliveryAttempts.filter((attempt) => attempt.leadId === 'l1').sort((a, b) => a.attemptNumber - b.attemptNumber)
+    expect(attempts.map((attempt) => attempt.attemptNumber)).toEqual([1, 2])
+    expect(attempts.map((attempt) => attempt.status)).toEqual(['rejected', 'accepted'])
+  })
+
+  it('associates a rejection with the correct delivery attempt', async () => {
+    const snapshot = await platformService.getSnapshot(alpha)
+    const rejection = snapshot.leadRejections.find((item) => item.id === 'lr1')
+    expect(rejection?.deliveryAttemptId).toBe('da1')
+    expect(snapshot.deliveryAttempts.find((attempt) => attempt.id === rejection?.deliveryAttemptId)?.status).toBe('rejected')
+  })
+
+  it('keeps every Release 2 collection tenant-scoped and new tenants empty', async () => {
+    const betaData = await platformService.getSnapshot(beta)
+    for (const records of [betaData.trafficSources,betaData.campaigns,betaData.buyerCaps,betaData.deliveryAttempts,betaData.leadRejections,betaData.leadStatusHistory]) {
+      expect(records.every((record) => record.tenantId === beta)).toBe(true)
+    }
+    expect(betaData.campaigns).toHaveLength(0)
+    expect(betaData.deliveryAttempts).toHaveLength(0)
+  })
 })

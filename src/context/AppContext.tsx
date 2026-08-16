@@ -43,7 +43,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const authorized = data.user.isPlatformAdmin || data.memberships.some((membership) => membership.tenantId === nextTenantId && membership.userId === data.user.id && membership.status === 'active')
     if (!authorized || !data.tenants.some((tenant) => tenant.id === nextTenantId)) return
     setTenantId(nextTenantId)
-    setData((current) => current ? { ...current, programs: [], leads: [], buyers: [], offers: [], integrations: [], tenantSettings: [], auditEvents: [] } : current)
+    setData((current) => current ? { ...current, programs: [], trafficSources: [], campaigns: [], leads: [], leadIdentities: [], buyers: [], offers: [], buyerPrograms: [], buyerRules: [], buyerCaps: [], leadDeliveries: [], deliveryAttempts: [], leadRejections: [], leadStatusHistory: [], integrations: [], tenantSettings: [], auditEvents: [] } : current)
     void refresh(nextTenantId)
   }, [data, refresh])
 

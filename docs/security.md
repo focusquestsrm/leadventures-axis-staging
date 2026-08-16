@@ -16,12 +16,24 @@ Roles are `platform_admin`, `tenant_admin`, `manager`, `media_buyer`, `analyst`,
 - PII must not be placed in URLs, logs, analytics, errors, or audit metadata.
 - Integration credentials belong in a secrets manager; only a reference may be stored.
 - No identity fields may be sent to an AI service.
+- Delivery attempts and rejections store status, timing, references, payout, and redacted operational reasons only. Full request/response bodies are prohibited.
+- The workspace service queries `lead_identity` only for a direct active `tenant_admin` or `manager` membership. Platform status alone is insufficient.
 
 Encryption at rest and transport protections are supplied by the configured database provider; field-level encryption and masking can be added behind the isolated identity boundary.
 
 ## Audit and secrets
 
 Database triggers capture mutations for tenant, membership, buyer, offer, program, lead, and integration records. Audit metadata records the operation only and excludes row content. Audit events are append-only to authenticated application users.
+
+Release 2 extends safe audit capture to traffic sources, campaigns, buyer-program relationships, buyer rules, buyer caps, deliveries, attempts, rejections, and status history. Metadata continues to contain identifiers and operation names—not identity fields, reasons containing PII, or delivery payloads.
+
+## Release 2 authorization
+
+- All active tenant roles may read operational R2 data.
+- `tenant_admin` and `manager` may mutate buyer, capacity, delivery, and lifecycle records.
+- `media_buyer` may manage traffic sources and campaigns but cannot create delivery attempts or caps.
+- `analyst` and `viewer` remain read-only.
+- RLS is authoritative; client capability checks only shape the interface.
 
 Normal authenticated users receive no insert, update, or delete grant on `audit_events`; security-definer mutation triggers perform capture. Membership creation, role change, deactivation/reactivation, and removal receive distinct event types.
 
