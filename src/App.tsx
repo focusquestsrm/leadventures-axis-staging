@@ -11,6 +11,7 @@ import { RecoveryAdministrationPage,RecoveryPathCreatePage } from './recoveryAdm
 import { AnomaliesPage,BuyerOptimizationPanel,ForecastsPage,OptimizationBriefPage,OptimizeDashboardPage,PacingPage,ProgramOptimizationPanel,RecommendationDetailPage,RecommendationsPage } from './optimizePages'
 import { AcquireDashboardPage,AdGroupDetailPage,AdGroupScorecardPage,CampaignDetailPage,CampaignScorecardPage,ConvertAcquisitionPanel,CreativeDetailPage,CreativeScorecardPage,ExperimentsPage,MediaAccountDetailPage,MediaAccountsPanel,MediaImportFinalizePage,OptimizeAcquisitionPanel,SourceScorecardPage } from './acquirePages'
 import { ApprovalCenterPage, AutomationActionDetailPage, AutomationActionsPage, AutomationNotificationsPage, AutomationOverviewPage, AutomationPoliciesPage, AutomationSafeguardsPage, AutomationSettingsPage, ExecutionHistoryPage } from './automationPages'
+import { CommercialReadinessPage } from './readinessPage'
 
 function BuyersRelease2Page() { return <><BuyersOffersPage /><BuyerEcosystemPanels /></> }
 function BuyerDetailOptimizePage() { return <><BuyerDetailPage/><BuyerOptimizationPanel/></> }
@@ -22,6 +23,11 @@ function AcquireMediaPage() { return <><AcquireDashboardPage/><MediaAccountsPane
 function ProtectedAdmin() {
   const { allowed } = useApp()
   return allowed('tenant:manage') || allowed('platform:manage') ? <AdminPage /> : <div className="center-state"><h1>Access denied</h1><p>Your current role cannot administer this workspace.</p></div>
+}
+
+function ProtectedReadiness() {
+  const { allowed } = useApp()
+  return allowed('tenant:manage') || allowed('platform:manage') ? <CommercialReadinessPage /> : <div className="center-state"><h1>Access denied</h1><p>Commercial readiness evidence is restricted to administrators.</p></div>
 }
 
 function AppRoutes() {
@@ -72,6 +78,7 @@ function AppRoutes() {
     <Route path="/integrations/:integrationId/media-import" element={<MediaImportFinalizePage />} />
     <Route path="/integrations/media/:accountId" element={<MediaAccountDetailPage />} />
     <Route path="/admin" element={<ProtectedAdmin />} />
+    <Route path="/admin/readiness" element={<ProtectedReadiness />} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></Shell>
 }

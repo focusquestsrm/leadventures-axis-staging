@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Activity, BarChart3, Bell, Building2, ChevronDown, CircleDollarSign, Gauge, GitBranch, LayoutDashboard, Menu, Plug, RotateCcw, Search, Settings, ShieldCheck, Sparkles, Target, Users, Workflow, X } from 'lucide-react'
+import { Activity, BarChart3, Bell, Building2, CheckSquare2, ChevronDown, CircleDollarSign, Gauge, GitBranch, LayoutDashboard, Menu, Plug, RotateCcw, Search, Settings, ShieldCheck, Sparkles, Target, Users, Workflow, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { roleLabel } from '../lib/rbac'
 import { demoMode, supabase } from '../lib/supabase'
@@ -46,7 +46,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <span className="nav-heading">Intelligence</span>
         {intelligenceNav.map((item) => <NavItem {...item} key={item.to} onClick={() => setOpen(false)} />)}
         {allowed('automation:read') && <><span className="nav-heading">Control</span><NavItem to="/automation" label="Automation Center" icon={Workflow} onClick={() => setOpen(false)} /></>}
-        {(allowed('tenant:manage') || allowed('platform:manage')) && <><span className="nav-heading">Manage</span><NavItem to="/admin" label="Administration" icon={Settings} onClick={() => setOpen(false)} /></>}
+        {(allowed('tenant:manage') || allowed('platform:manage')) && <><span className="nav-heading">Manage</span><NavItem to="/admin" label="Administration" icon={Settings} onClick={() => setOpen(false)} /><NavItem to="/admin/readiness" label="Commercial Readiness" icon={CheckSquare2} onClick={() => setOpen(false)} /></>}
       </nav>
       <div className="sidebar-footer"><ShieldCheck size={16} /><span>{demoMode ? 'Synthetic demo · staging' : 'Connected staging'}</span></div>
     </aside>

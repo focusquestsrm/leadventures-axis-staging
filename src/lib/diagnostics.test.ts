@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { logWorkspaceDiagnostic } from './diagnostics'
+import { logWorkspaceDiagnostic, redactDiagnosticMessage } from './diagnostics'
 
 describe('safe workspace diagnostics', () => {
   afterEach(() => vi.restoreAllMocks())
@@ -28,5 +28,15 @@ describe('safe workspace diagnostics', () => {
       message: 'column programs.category does not exist',
     })
     expect(consoleError).toHaveBeenCalledWith('[Axis] Workspace operation failed', diagnostic)
+  })
+})
+
+describe('production diagnostic redaction', () => {
+  it('removes identity, authorization, secret, and query credential values', () => {
+    const safe = redactDiagnosticMessage('user@example.com +1 (804) 555-0199 Bearer abc.def_xyz https://x.test?a=1&access_token=hidden sb_secret_danger')
+    expect(safe).not.toMatch(/user@example|804|abc\.def|access_token=hidden|sb_secret_danger/)
+    expect(safe).toContain('[redacted email]')
+    expect(safe).toContain('[redacted phone]')
+    expect(safe).toContain('[redacted authorization]')
   })
 })

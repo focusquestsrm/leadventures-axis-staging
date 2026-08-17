@@ -26,6 +26,14 @@ const mappings=release4Demo.fieldMappings
 describe('Release 4 canonical integration adapters', () => {
   it('parses quoted CSV fields without splitting embedded commas', () => expect(parseCsv('id,name\n1,"University, North"')[0].name).toBe('University, North'))
   it('rejects duplicate CSV headers', () => expect(() => parseCsv('id,id\n1,2')).toThrow(/unique/))
+  it('rejects malformed and structurally oversized CSV rows', () => {
+    expect(() => parseCsv('id,name\n1,"unterminated')).toThrow(/unterminated/)
+    expect(() => parseCsv('id\n1,unexpected')).toThrow(/more values/)
+  })
+  it('rejects oversized cells and batches before adapter processing', () => {
+    expect(() => parseCsv(`id\n${'x'.repeat(10_001)}`)).toThrow(/10,000 characters/)
+    expect(() => parseCsv(`id\n${Array.from({ length: 10_001 }, (_, index) => index).join('\n')}`)).toThrow(/10,000 data rows/)
+  })
   it('normalizes mapped LeadHoop fields to canonical types', () => { const result=leadHoopAdapter.normalize(parseCsv(leadHoopDemoCsv),mappings)[0]; expect(result.record).toMatchObject({ externalTransactionId:'LH-DEMO-001',externalLeadId:'SYN-LEAD-20481',status:'accepted',responseTimeMs:842,payout:62,sourceSystem:'LeadHoop' }) })
   it('rejects rows without deterministic lead identifiers', () => { const result=leadHoopAdapter.normalize(parseCsv('transaction_id,lead_id,buyer,status,created_at\nx,,Northstar University,accepted,2026-08-16T00:00:00Z'),mappings)[0]; expect(result.issues.map((issue) => issue.code)).toContain('MISSING_LEAD_IDENTIFIER') })
   it('rejects negative response times and payouts', () => { const row='transaction_id,lead_id,buyer,status,response_ms,payout,created_at\nx,SYN-LEAD-20481,Northstar University,accepted,-1,-5,2026-08-16T00:00:00Z'; const codes=leadHoopAdapter.normalize(parseCsv(row),mappings)[0].issues.map((issue) => issue.code); expect(codes).toEqual(expect.arrayContaining(['INVALID_RESPONSE_TIME','INVALID_PAYOUT'])) })
