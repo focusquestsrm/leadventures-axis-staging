@@ -35,3 +35,20 @@ Each preset compares with the immediately preceding equivalent duration. Counts,
 ## Data quality
 
 Missing source, campaign, program, response time, and rejection classification are surfaced explicitly. Blank rejection categories are normalized to `Unknown / Unclassified`; Axis never invents a rejection reason.
+
+## Release 4 outcome metrics
+
+Outcome metrics count distinct matched leads in the selected lead cohort. An outcome is eligible only when its tenant matches, its lead passes the active R3 filters, its occurrence is no later than the report end, and any buyer filter matches.
+
+| Metric | Definition | Missing-data behavior |
+|---|---|---|
+| Contacted | Distinct selected leads with a `contacted` outcome. | Zero when no matching outcomes exist. |
+| Qualified | Distinct selected leads with a `qualified` outcome. | External stages require explicit mapping. |
+| Applications / Sales | Distinct leads with `application` or `sale`. | Terminology remains configurable. |
+| Conversions | Distinct leads with `enrollment` or `sale`. | No acceptance-based inference. |
+| Starts / Completions | Distinct leads with `start` or `completed`. | No stage-sequence inference. |
+| Outcome Revenue | Sum of actual non-null outcome monetary values. | Unavailable when no economic value exists. |
+| Revenue per Lead | Outcome Revenue / selected leads. | Unavailable without outcome revenue or leads. |
+| Revenue per Accepted Lead | Outcome Revenue / accepted selected leads. | Unavailable without outcome revenue or accepted leads. |
+
+Source/campaign, buyer, and program scorecards inherit attribution from the matched operational lead and optional outcome dimensions. Lead cost and gross contribution remain unsupported until authoritative acquisition cost exists.

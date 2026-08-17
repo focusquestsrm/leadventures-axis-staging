@@ -43,3 +43,9 @@ The database RPC aggregates current and previous periods, trends, source/campaig
 ## Migration process
 
 Create forward-only, timestamped SQL migrations in `supabase/migrations`. Review every policy and tenant relationship before applying. Test locally with `supabase db reset`, then apply to the linked staging project with `supabase db push`. Never edit already-applied migration history.
+
+## Release 4 integration and outcome layer
+
+`src/integrations` owns canonical adapter contracts, parsing, normalization, and deterministic matching. `src/services/integrationService.ts` is the only browser data boundary for integration operations. Vendor adapters produce a canonical record and structured safe issues; pages contain no vendor translation logic.
+
+The database stores mappings, batch/error/sync observability, explicit outcome taxonomy mappings, and downstream outcome lineage. Trusted finalization is transactional, `SECURITY INVOKER`, manager-authorized, size bounded, and idempotent. `axis_outcome_intelligence_snapshot` adds tenant-scoped downstream aggregates to the existing R3 report without accessing identity tables.

@@ -1,9 +1,10 @@
-import type { AuditEvent, Buyer, BuyerCap, BuyerProgram, BuyerRule, Campaign, DeliveryAttempt, Integration, Lead, LeadDelivery, LeadIdentity, LeadRejection, LeadStatusEvent, Membership, Offer, Program, SessionUser, Tenant, TenantRole, TenantSetting, TrafficSource } from '../types'
+import type { AuditEvent, Buyer, BuyerCap, BuyerProgram, BuyerRule, Campaign, DeliveryAttempt, Integration, IntegrationCategory, Lead, LeadDelivery, LeadIdentity, LeadOutcome, LeadRejection, LeadStatusEvent, Membership, Offer, Program, SessionUser, Tenant, TenantRole, TenantSetting, TrafficSource } from '../types'
 import { demoMode, supabase } from '../lib/supabase'
 import { isTenantAssignableRole } from '../lib/rbac'
 import { auditEventSelect, membershipSelect } from './queryContracts'
 import { release2Demo } from '../data/release2Demo'
 import { release3Demo } from '../data/release3Demo'
+import { release4Demo } from '../data/release4Demo'
 
 export interface PlatformSnapshot {
   user: SessionUser
@@ -23,6 +24,7 @@ export interface PlatformSnapshot {
   deliveryAttempts: DeliveryAttempt[]
   leadRejections: LeadRejection[]
   leadStatusHistory: LeadStatusEvent[]
+  leadOutcomes: LeadOutcome[]
   integrations: Integration[]
   tenantSettings: TenantSetting[]
   auditEvents: AuditEvent[]
@@ -80,10 +82,11 @@ const initialSnapshot: PlatformSnapshot = {
   leadRejections: [...release2Demo.leadRejections, ...release3Demo.leadRejections],
   leadStatusHistory: [...release2Demo.leadStatusHistory, ...release3Demo.leadStatusHistory],
   integrations: [
-    { id: 'i1', tenantId: tenantA, name: 'Inbound Lead API', kind: 'API', status: 'connected', updatedAt: now },
-    { id: 'i2', tenantId: tenantA, name: 'Webhook Delivery', kind: 'Webhook', status: 'needs_attention', updatedAt: '2026-08-14T18:20:00.000Z' },
-    { id: 'i3', tenantId: tenantA, name: 'CRM Destination', kind: 'CRM', status: 'not_configured', updatedAt: '2026-08-10T18:20:00.000Z' },
+    { id: 'i-leadhoop', tenantId: tenantA, name: 'LeadHoop Distribution', kind: 'Lead distribution', category: 'lead_distribution', vendor: 'LeadHoop', status: 'connected', lastSyncAt: now, lastSuccessAt: now, recordsProcessed: 6, errorCount: 1, health: 'healthy', updatedAt: now },
+    { id: 'i-crm', tenantId: tenantA, name: 'Synthetic CRM Outcomes', kind: 'CRM', category: 'crm', vendor: 'Generic CRM', status: 'connected', lastSyncAt: '2026-08-16T15:05:00.000Z', lastSuccessAt: '2026-08-16T15:05:00.000Z', recordsProcessed: 7, errorCount: 0, health: 'healthy', updatedAt: '2026-08-16T15:05:00.000Z' },
+    { id: 'i2', tenantId: tenantA, name: 'Webhook Delivery', kind: 'Webhook', category: 'webhook', vendor: 'Custom', status: 'needs_attention', lastSyncAt: '2026-08-14T18:20:00.000Z', lastSuccessAt: null, recordsProcessed: 0, errorCount: 2, health: 'attention', updatedAt: '2026-08-14T18:20:00.000Z' },
   ],
+  leadOutcomes: release4Demo.outcomes,
   tenantSettings: [
     { id: 's1', tenantId: tenantA, key: 'locale', value: 'en-US' },
     { id: 's2', tenantId: tenantA, key: 'reporting_timezone', value: 'America/New_York' },
@@ -109,7 +112,7 @@ export interface BuyerInput { id?: string; tenantId: string; name: string; exter
 export interface ProgramInput { id?: string; tenantId: string; name: string; code: string; category: string; status: Program['status'] }
 export interface OfferInput { id?: string; tenantId: string; name: string; programId: string | null; buyerId?: string | null; status: Offer['status'] }
 export interface LeadInput { id?: string; tenantId: string; reference: string; externalLeadId?: string; trafficSourceId?: string | null; campaignId?: string | null; programId: string | null; offerId?: string | null; source: string; status: Lead['status']; score: number }
-export interface IntegrationInput { id?: string; tenantId: string; name: string; kind: string; status: Integration['status'] }
+export interface IntegrationInput { id?: string; tenantId: string; name: string; kind: string; category?: IntegrationCategory; vendor?: string; status: Integration['status'] }
 export interface TrafficSourceInput { id?: string; tenantId: string; name: string; sourceType: string; externalId: string; status: TrafficSource['status']; notes: string }
 export interface CampaignInput { id?: string; tenantId: string; trafficSourceId: string | null; name: string; externalId: string; status: Campaign['status']; campaignType: string; startDate: string | null; endDate: string | null }
 export interface BuyerProgramInput { id?: string; tenantId: string; buyerId: string; programId: string; status: BuyerProgram['status']; payout: number; priority: number }
@@ -135,7 +138,7 @@ export const platformService = {
       const authorizedIds = profile.is_platform_admin ? tenantRows.map((row) => row.id) : membershipRows.filter((row) => row.user_id === auth.user.id && row.status === 'active').map((row) => row.tenant_id)
       const activeTenantId = requestedTenantId && authorizedIds.includes(requestedTenantId) ? requestedTenantId : authorizedIds[0]
       if (!activeTenantId) throw new Error('No authorized tenant workspace is available.')
-      const [programsResult, sourcesResult, campaignsResult, leadsResult, buyersResult, offersResult, buyerProgramsResult, buyerRulesResult, buyerCapsResult, deliveriesResult, attemptsResult, rejectionsResult, statusHistoryResult, integrationsResult, settingsResult, auditResult] = await Promise.all([
+      const [programsResult, sourcesResult, campaignsResult, leadsResult, buyersResult, offersResult, buyerProgramsResult, buyerRulesResult, buyerCapsResult, deliveriesResult, attemptsResult, rejectionsResult, statusHistoryResult, outcomesResult, integrationsResult, settingsResult, auditResult] = await Promise.all([
         supabase.from('programs').select('id,tenant_id,name,code,category,status').eq('tenant_id', activeTenantId).order('name'),
         supabase.from('traffic_sources').select('id,tenant_id,name,source_type,external_id,status,notes').eq('tenant_id', activeTenantId).order('name'),
         supabase.from('campaigns').select('id,tenant_id,traffic_source_id,name,external_id,status,campaign_type,start_date,end_date').eq('tenant_id', activeTenantId).order('name'),
@@ -149,7 +152,8 @@ export const platformService = {
         supabase.from('lead_delivery_attempts').select('id,tenant_id,lead_delivery_id,lead_id,buyer_id,offer_id,program_id,attempt_number,delivery_method,status,request_started_at,response_received_at,response_time_ms,external_reference,payout,created_at').eq('tenant_id', activeTenantId).order('created_at', { ascending: false }),
         supabase.from('lead_rejections').select('id,tenant_id,lead_id,delivery_attempt_id,buyer_id,rejection_code,rejection_category,reason,recoverable,created_at').eq('tenant_id', activeTenantId).order('created_at', { ascending: false }),
         supabase.from('lead_status_history').select('id,tenant_id,lead_id,from_status,to_status,reason,changed_by,created_at').eq('tenant_id', activeTenantId).order('created_at'),
-        supabase.from('integrations').select('id,tenant_id,name,kind,status,updated_at').eq('tenant_id', activeTenantId).order('name'),
+        supabase.from('lead_outcomes').select('id,tenant_id,lead_id,integration_id,import_batch_id,external_outcome_id,outcome_type,outcome_stage,status,occurred_at,monetary_value,currency,program_id,buyer_id,source_system,external_record_id,ingested_at,created_at').eq('tenant_id', activeTenantId).order('occurred_at'),
+        supabase.from('integrations').select('id,tenant_id,name,kind,category,vendor,status,last_sync_at,last_success_at,records_processed,error_count,health,updated_at').eq('tenant_id', activeTenantId).order('name'),
         supabase.from('tenant_settings').select('id,tenant_id,setting_key,setting_value').eq('tenant_id', activeTenantId).order('setting_key'),
         supabase.from('audit_events').select(auditEventSelect).eq('tenant_id', activeTenantId).order('occurred_at', { ascending: false }).limit(100),
       ])
@@ -166,6 +170,7 @@ export const platformService = {
       requireQuery('workspace.delivery_attempts', attemptsResult)
       requireQuery('workspace.lead_rejections', rejectionsResult)
       requireQuery('workspace.lead_status_history', statusHistoryResult)
+      requireQuery('workspace.lead_outcomes', outcomesResult)
       requireQuery('workspace.integrations', integrationsResult)
       requireQuery('workspace.settings', settingsResult)
       requireQuery('workspace.audit', auditResult)
@@ -193,7 +198,8 @@ export const platformService = {
         deliveryAttempts: (attemptsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, deliveryId: row.lead_delivery_id, leadId: row.lead_id, buyerId: row.buyer_id, offerId: row.offer_id, programId: row.program_id, attemptNumber: row.attempt_number, deliveryMethod: row.delivery_method, status: row.status as DeliveryAttempt['status'], requestStartedAt: row.request_started_at, responseReceivedAt: row.response_received_at, responseTimeMs: row.response_time_ms, externalReference: row.external_reference ?? '', payout: row.payout == null ? null : Number(row.payout), createdAt: row.created_at })),
         leadRejections: (rejectionsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, leadId: row.lead_id, deliveryAttemptId: row.delivery_attempt_id, buyerId: row.buyer_id, rejectionCode: row.rejection_code ?? '', category: row.rejection_category, reason: row.reason ?? '', recoverable: row.recoverable, createdAt: row.created_at })),
         leadStatusHistory: (statusHistoryResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, leadId: row.lead_id, fromStatus: row.from_status as LeadStatusEvent['fromStatus'], toStatus: row.to_status as LeadStatusEvent['toStatus'], reason: row.reason ?? '', changedBy: row.changed_by, createdAt: row.created_at })),
-        integrations: (integrationsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, name: row.name, kind: row.kind, status: row.status as Integration['status'], updatedAt: row.updated_at })),
+        leadOutcomes: (outcomesResult.data ?? []).map((row) => ({ id:row.id,tenantId:row.tenant_id,leadId:row.lead_id,integrationId:row.integration_id,importBatchId:row.import_batch_id,externalOutcomeId:row.external_outcome_id,outcomeType:row.outcome_type as LeadOutcome['outcomeType'],outcomeStage:row.outcome_stage,status:row.status,occurredAt:row.occurred_at,monetaryValue:row.monetary_value == null ? null : Number(row.monetary_value),currency:row.currency,programId:row.program_id,buyerId:row.buyer_id,sourceSystem:row.source_system,externalRecordId:row.external_record_id,ingestedAt:row.ingested_at,createdAt:row.created_at })),
+        integrations: (integrationsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, name: row.name, kind: row.kind, category:row.category as IntegrationCategory,vendor:row.vendor,status: row.status as Integration['status'],lastSyncAt:row.last_sync_at,lastSuccessAt:row.last_success_at,recordsProcessed:row.records_processed,errorCount:row.error_count,health:row.health as Integration['health'],updatedAt: row.updated_at })),
         tenantSettings: (settingsResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, key: row.setting_key, value: String((row.setting_value as { value?: unknown } | null)?.value ?? '') })),
         auditEvents: (auditResult.data ?? []).map((row) => ({ id: row.id, tenantId: row.tenant_id, actor: relationDisplayName(row.actor_profile) || 'System', eventType: row.event_type, entityType: row.entity_type, entityId: row.entity_id ?? '', occurredAt: row.occurred_at })),
       }
@@ -201,7 +207,7 @@ export const platformService = {
     await delay()
     const activeTenantId = requestedTenantId && state.tenants.some((tenant) => tenant.id === requestedTenantId) ? requestedTenantId : state.tenants[0].id
     const scoped = <T extends { tenantId: string }>(items: T[]) => items.filter((item) => item.tenantId === activeTenantId)
-    return structuredClone({ ...state, programs: scoped(state.programs), trafficSources: scoped(state.trafficSources), campaigns: scoped(state.campaigns), leads: scoped(state.leads), leadIdentities: scoped(state.leadIdentities), buyers: scoped(state.buyers), offers: scoped(state.offers), buyerPrograms: scoped(state.buyerPrograms), buyerRules: scoped(state.buyerRules), buyerCaps: scoped(state.buyerCaps), leadDeliveries: scoped(state.leadDeliveries), deliveryAttempts: scoped(state.deliveryAttempts), leadRejections: scoped(state.leadRejections), leadStatusHistory: scoped(state.leadStatusHistory), integrations: scoped(state.integrations), tenantSettings: scoped(state.tenantSettings), auditEvents: state.auditEvents.filter((item) => item.tenantId === activeTenantId) })
+    return structuredClone({ ...state, programs: scoped(state.programs), trafficSources: scoped(state.trafficSources), campaigns: scoped(state.campaigns), leads: scoped(state.leads), leadIdentities: scoped(state.leadIdentities), buyers: scoped(state.buyers), offers: scoped(state.offers), buyerPrograms: scoped(state.buyerPrograms), buyerRules: scoped(state.buyerRules), buyerCaps: scoped(state.buyerCaps), leadDeliveries: scoped(state.leadDeliveries), deliveryAttempts: scoped(state.deliveryAttempts), leadRejections: scoped(state.leadRejections), leadStatusHistory: scoped(state.leadStatusHistory), leadOutcomes: scoped(state.leadOutcomes), integrations: scoped(state.integrations), tenantSettings: scoped(state.tenantSettings), auditEvents: state.auditEvents.filter((item) => item.tenantId === activeTenantId) })
   },
   async createTenant(input: Pick<Tenant, 'name' | 'slug' | 'plan'>): Promise<Tenant> {
     if (!demoMode && supabase) {
@@ -281,8 +287,8 @@ export const platformService = {
     await delay(); requireDemoTenant(input.tenantId); const program = state.programs.find((item) => item.id === input.programId && item.tenantId === input.tenantId); const source = state.trafficSources.find((item) => item.id === input.trafficSourceId && item.tenantId === input.tenantId); const campaign = state.campaigns.find((item) => item.id === input.campaignId && item.tenantId === input.tenantId); const offer = state.offers.find((item) => item.id === input.offerId && item.tenantId === input.tenantId); const existing = input.id ? state.leads.find((item) => item.id === input.id && item.tenantId === input.tenantId) : undefined; const timestamp = new Date().toISOString(); const expanded = { ...input, externalLeadId: input.externalLeadId ?? existing?.externalLeadId ?? '', trafficSourceId: input.trafficSourceId ?? existing?.trafficSourceId ?? null, campaignId: input.campaignId ?? existing?.campaignId ?? null, offerId: input.offerId ?? existing?.offerId ?? null, program: program?.name ?? 'Unassigned', source: source?.name ?? input.source, campaign: campaign?.name ?? 'Unassigned', offer: offer?.name ?? 'Unassigned' }; if (existing) { const previous = existing.status; Object.assign(existing, expanded); if (previous !== input.status) state.leadStatusHistory.push({ id: crypto.randomUUID(), tenantId: input.tenantId, leadId: existing.id, fromStatus: previous, toStatus: input.status, reason: 'Operational status updated', changedBy: state.user.id, createdAt: timestamp }) } else { const id = crypto.randomUUID(); state.leads.push({ ...expanded, id, receivedAt: timestamp, createdAt: timestamp }); state.leadStatusHistory.push({ id: crypto.randomUUID(), tenantId: input.tenantId, leadId: id, fromStatus: null, toStatus: input.status, reason: 'Lead created', changedBy: state.user.id, createdAt: timestamp }); input.id = id } auditDemo(input.tenantId, `leads.${existing ? 'update' : 'insert'}`, 'leads', input.id!)
   },
   async saveIntegration(input: IntegrationInput): Promise<void> {
-    if (!demoMode && supabase) { const { data: auth } = await supabase.auth.getUser(); const payload = { tenant_id: input.tenantId, name: input.name, kind: input.kind, status: input.status, config_reference: null, created_by: auth.user?.id }; const { error } = input.id ? await supabase.from('integrations').update(payload).eq('id', input.id).eq('tenant_id', input.tenantId) : await supabase.from('integrations').insert(payload); if (error) throw error; return }
-    await delay(); requireDemoTenant(input.tenantId); const existing = input.id ? state.integrations.find((item) => item.id === input.id && item.tenantId === input.tenantId) : undefined; if (existing) Object.assign(existing, input, { updatedAt: new Date().toISOString() }); else { const id = crypto.randomUUID(); state.integrations.push({ ...input, id, updatedAt: new Date().toISOString() }); input.id = id } auditDemo(input.tenantId, `integrations.${existing ? 'update' : 'insert'}`, 'integrations', input.id!)
+    if (!demoMode && supabase) { const { data: auth } = await supabase.auth.getUser(); const payload = { tenant_id: input.tenantId, name: input.name, kind: input.kind, category:input.category ?? 'other',vendor:input.vendor ?? 'Custom', status: input.status, config_reference: null, created_by: auth.user?.id }; const { error } = input.id ? await supabase.from('integrations').update(payload).eq('id', input.id).eq('tenant_id', input.tenantId) : await supabase.from('integrations').insert(payload); if (error) throw error; return }
+    await delay(); requireDemoTenant(input.tenantId); const existing = input.id ? state.integrations.find((item) => item.id === input.id && item.tenantId === input.tenantId) : undefined; if (existing) Object.assign(existing, input, { updatedAt: new Date().toISOString() }); else { const id = crypto.randomUUID(); state.integrations.push({ ...input,category:input.category ?? 'other',vendor:input.vendor ?? 'Custom',lastSyncAt:null,lastSuccessAt:null,recordsProcessed:0,errorCount:0,health:input.status==='connected' ? 'healthy' : 'not_configured', id, updatedAt: new Date().toISOString() }); input.id = id } auditDemo(input.tenantId, `integrations.${existing ? 'update' : 'insert'}`, 'integrations', input.id!)
   },
   async saveTenantSetting(tenantId: string, key: string, value: string): Promise<void> {
     if (!demoMode && supabase) { const { data: auth } = await supabase.auth.getUser(); const { error } = await supabase.from('tenant_settings').upsert({ tenant_id: tenantId, setting_key: key, setting_value: { value }, created_by: auth.user?.id }, { onConflict: 'tenant_id,setting_key' }); if (error) throw error; return }

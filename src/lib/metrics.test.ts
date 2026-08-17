@@ -22,6 +22,7 @@ const input: IntelligenceInput = {
   buyerCaps: [{ id:'cap1',tenantId:tenantA,buyerId:'b1',programId:'p1',capType:'daily',periodStart:'2026-08-16',periodEnd:'2026-08-17',limit:100,delivered:90,status:'active' }],
   trafficSources: [{ id:'s1',tenantId:tenantA,name:'Source A',sourceType:'paid',externalId:'',status:'active',notes:'' },{ id:'private-source',tenantId:tenantB,name:'Private Source',sourceType:'paid',externalId:'',status:'active',notes:'' }],
   campaigns: [{ id:'c1',tenantId:tenantA,trafficSourceId:'s1',name:'Campaign A',externalId:'',status:'active',campaignType:'paid',startDate:null,endDate:null }],
+  outcomes: [],
 }
 
 const report = () => calculateIntelligence(input, defaultIntelligenceFilters(now), now)
@@ -41,4 +42,18 @@ describe('Release 3 metric definitions', () => {
   it('surfaces missing and unknown data instead of silently dropping it', () => { expect(report().dataQuality.missingSource).toBe(1); expect(report().rejectionCategories[0].label).toBe('Unknown / Unclassified') })
   it('contains no mutation capability in the intelligence result', () => expect(Object.keys(report())).not.toContain('save'))
   it('omits PII fields from analytics responses', () => expect(JSON.stringify(report())).not.toMatch(/email|phone|firstName|lastName|address/i))
+})
+
+describe('Release 4 closed-loop metric definitions', () => {
+  const withOutcomes = () => calculateIntelligence({ ...input,outcomes:[
+    { id:'o1',tenantId:tenantA,leadId:'l1',integrationId:'crm',importBatchId:null,externalOutcomeId:'crm-1',outcomeType:'contacted',outcomeStage:'Contacted',status:'completed',occurredAt:'2026-08-16T14:00:00.000Z',monetaryValue:null,currency:'USD',programId:'p1',buyerId:'b1',sourceSystem:'Synthetic CRM',externalRecordId:'crm-1',ingestedAt:'2026-08-16T14:01:00.000Z',createdAt:'2026-08-16T14:01:00.000Z' },
+    { id:'o2',tenantId:tenantA,leadId:'l1',integrationId:'crm',importBatchId:null,externalOutcomeId:'crm-2',outcomeType:'enrollment',outcomeStage:'Conversion',status:'completed',occurredAt:'2026-08-16T15:00:00.000Z',monetaryValue:1200,currency:'USD',programId:'p1',buyerId:'b1',sourceSystem:'Synthetic CRM',externalRecordId:'crm-2',ingestedAt:'2026-08-16T15:01:00.000Z',createdAt:'2026-08-16T15:01:00.000Z' },
+    { id:'private-outcome',tenantId:tenantB,leadId:'other',integrationId:'private',importBatchId:null,externalOutcomeId:'private',outcomeType:'sale',outcomeStage:'Conversion',status:'completed',occurredAt:'2026-08-16T15:00:00.000Z',monetaryValue:99999,currency:'USD',programId:'private-program',buyerId:'private-buyer',sourceSystem:'Private CRM',externalRecordId:'private',ingestedAt:'2026-08-16T15:01:00.000Z',createdAt:'2026-08-16T15:01:00.000Z' },
+  ] },defaultIntelligenceFilters(now),now)
+  it('counts conversions by distinct matched lead', () => expect(withOutcomes().outcomes.conversions.value).toBe(1))
+  it('calculates outcome revenue from explicit monetary values', () => expect(withOutcomes().outcomes.revenue.value).toBe(1200))
+  it('calculates revenue per selected lead', () => expect(withOutcomes().outcomes.revenuePerLead.value).toBe(600))
+  it('calculates revenue per accepted lead', () => expect(withOutcomes().outcomes.revenuePerAcceptedLead.value).toBe(1200))
+  it('attributes conversions and revenue to source, buyer, and program dimensions', () => { const report=withOutcomes(); expect(report.sources[0]).toMatchObject({ conversions:1,outcomeRevenue:1200 }); expect(report.buyers[0]).toMatchObject({ conversions:1,outcomeRevenue:1200 }); expect(report.programs[0]).toMatchObject({ conversions:1,outcomeRevenue:1200 }) })
+  it('isolates downstream economic outcomes by tenant', () => expect(JSON.stringify(withOutcomes())).not.toContain('99999'))
 })

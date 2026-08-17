@@ -30,7 +30,7 @@ export function IntelligenceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true
     setLoading(true); setError('')
-    const scoped = { tenantId: tenant.id, leads: data.leads, attempts: data.deliveryAttempts, rejections: data.leadRejections, buyers: data.buyers, programs: data.programs, buyerPrograms: data.buyerPrograms, buyerCaps: data.buyerCaps, trafficSources: data.trafficSources, campaigns: data.campaigns }
+    const scoped = { tenantId: tenant.id, leads: data.leads, attempts: data.deliveryAttempts, rejections: data.leadRejections, buyers: data.buyers, programs: data.programs, buyerPrograms: data.buyerPrograms, buyerCaps: data.buyerCaps, trafficSources: data.trafficSources, campaigns: data.campaigns, outcomes:data.leadOutcomes }
     void intelligenceService.getReport(scoped, filters).then((next) => { if (active) setReport(next) }).catch((caught) => { const diagnostic = logWorkspaceDiagnostic('intelligence.load', caught); if (active) setError(`Intelligence is temporarily unavailable (${diagnostic.code}).`) }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [data, filters, tenant.id, version])

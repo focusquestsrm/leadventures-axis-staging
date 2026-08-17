@@ -50,3 +50,11 @@ Secret-bearing `.env*` files are ignored except `.env.example`. The anon key is 
 ## Compliance foundation
 
 Release 1 makes no legal claims. Future consent, TCPA evidence, suppression, DNC, revocation, privacy request, retention, and access review records should be separate tenant-owned tables with RLS, retention policies, and audit coverage.
+
+## Release 4 integration security
+
+All integration mappings, imports, syncs, errors, and outcomes have RLS plus tenant-relationship triggers. Members may read their tenant's operational records; only tenant administrators and managers may mutate them or finalize imports. Cross-tenant integration, batch, lead, buyer, and program references fail at the database boundary.
+
+Normalization allowlists operational fields and drops unmapped report columns. Raw files and submitted row bodies are not placed in database records, logs, errors, or audit metadata. Audit triggers record table operation and identifiers through the generic PII-safe audit function. Outcome intelligence is `SECURITY INVOKER`, tenant-authorized, read-only, and excludes identity data.
+
+Connector credentials and webhook signing secrets require server-side provisioning. The browser UI deliberately contains no password/secret input and the application bundle uses no vendor secret or service-role environment variable.
