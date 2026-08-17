@@ -10,6 +10,7 @@ import { RecoveryDashboardPage,RecoveryDetailPage,RecoveryReviewPage } from './r
 import { RecoveryAdministrationPage,RecoveryPathCreatePage } from './recoveryAdminPages'
 import { AnomaliesPage,BuyerOptimizationPanel,ForecastsPage,OptimizationBriefPage,OptimizeDashboardPage,PacingPage,ProgramOptimizationPanel,RecommendationDetailPage,RecommendationsPage } from './optimizePages'
 import { AcquireDashboardPage,AdGroupDetailPage,AdGroupScorecardPage,CampaignDetailPage,CampaignScorecardPage,ConvertAcquisitionPanel,CreativeDetailPage,CreativeScorecardPage,ExperimentsPage,MediaAccountDetailPage,MediaAccountsPanel,MediaImportFinalizePage,OptimizeAcquisitionPanel,SourceScorecardPage } from './acquirePages'
+import { ApprovalCenterPage, AutomationActionDetailPage, AutomationActionsPage, AutomationNotificationsPage, AutomationOverviewPage, AutomationPoliciesPage, AutomationSafeguardsPage, AutomationSettingsPage, ExecutionHistoryPage } from './automationPages'
 
 function BuyersRelease2Page() { return <><BuyersOffersPage /><BuyerEcosystemPanels /></> }
 function BuyerDetailOptimizePage() { return <><BuyerDetailPage/><BuyerOptimizationPanel/></> }
@@ -49,6 +50,15 @@ function AppRoutes() {
     <Route path="/optimize/forecasts" element={<ForecastsPage />} />
     <Route path="/optimize/pacing" element={<PacingPage />} />
     <Route path="/optimize/anomalies" element={<AnomaliesPage />} />
+    <Route path="/automation" element={<AutomationOverviewPage />} />
+    <Route path="/automation/approvals" element={<ApprovalCenterPage />} />
+    <Route path="/automation/policies" element={<AutomationPoliciesPage />} />
+    <Route path="/automation/actions" element={<AutomationActionsPage />} />
+    <Route path="/automation/actions/:actionId" element={<AutomationActionDetailPage />} />
+    <Route path="/automation/executions" element={<ExecutionHistoryPage />} />
+    <Route path="/automation/safeguards" element={<AutomationSafeguardsPage />} />
+    <Route path="/automation/notifications" element={<AutomationNotificationsPage />} />
+    <Route path="/automation/settings" element={<AutomationSettingsPage />} />
     <Route path="/intelligence/buyers" element={<BuyerIntelligencePage />} />
     <Route path="/intelligence/programs" element={<ProgramIntelligenceOptimizePage />} />
     <Route path="/intelligence/rejections" element={<RejectionIntelligencePage />} />

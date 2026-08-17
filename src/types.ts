@@ -7,7 +7,9 @@ export type Permission =
   | 'source:read' | 'source:write' | 'delivery:read' | 'delivery:write' | 'capacity:read' | 'capacity:write'
   | 'integration:read' | 'integration:manage' | 'recovery:read' | 'recovery:manage' | 'recovery:approve'
   | 'optimization:read' | 'optimization:manage' | 'optimization:approve' | 'optimization:implement'
-  | 'acquisition:read' | 'acquisition:manage' | 'acquisition:sync' | 'experiment:manage' | 'audit:read' | 'platform:manage'
+  | 'acquisition:read' | 'acquisition:manage' | 'acquisition:sync' | 'experiment:manage'
+  | 'automation:read' | 'automation:configure' | 'automation:approve' | 'automation:execute' | 'automation:rollback' | 'automation:emergency_stop'
+  | 'audit:read' | 'platform:manage'
 
 export type LeadStatus = 'new' | 'validated' | 'queued' | 'delivering' | 'accepted' | 'rejected' | 'recovered' | 'closed'
 export type DeliveryStatus = 'pending' | 'accepted' | 'rejected' | 'timeout' | 'error' | 'cancelled'

@@ -82,3 +82,8 @@ All media accounts, campaigns, ad groups, ads, creatives, metrics, sync runs, la
 Access tokens, refresh tokens, client secrets, authorization codes, raw audience exports, customer lists, and credential payloads have no columns in the acquisition schema. Production credentials require encrypted server-side storage and must never use `VITE_` variables. The import RPC accepts normalized aggregates only, is size bounded, uses `SECURITY INVOKER`, and cannot change platform budgets.
 
 Attribution uses click/platform/UTM/Axis identifiers. Email, phone, name, and address are prohibited from acquisition analytics, destination references, audit metadata, and platform payloads. Audit triggers use the generic JSONB-safe capture function and record operations without row content.
+# Automation security
+
+Automation capabilities are centralized as read, configure, approve, execute, rollback, and emergency-stop permissions. Database functions repeat authorization checks and restrict media buyers to Acquire operations. Platform administrators can suspend infrastructure but receive no automatic lead-identity access.
+
+Action parameters, evidence, state snapshots, execution history, notifications, and audit metadata reject PII- and credential-shaped keys. Connector secrets remain server-side. Idempotency uniqueness prevents repeated mutations, RLS restricts every tenant record, target guards prevent cross-tenant references, and kill switches/circuit breakers fail closed.

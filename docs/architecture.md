@@ -69,3 +69,10 @@ Media adapters under `src/integrations/media` convert vendor exports into a comm
 The database canonicalizes platform hierarchy as Account -> Campaign -> Ad Group -> Ad -> Creative while retaining native external identifiers. Existing Axis campaigns and programs are optional relationships rather than duplicated business entities. Daily metric idempotency and tenant-scoped external uniqueness support safe repeated synchronization.
 
 OAuth exchange, token refresh, connector polling, and platform writes belong to a future trusted worker. Release 7 exposes no client credentials and performs no external media mutation.
+# Release 8 orchestration boundary
+
+Axis orchestration is a policy and authorization layer above recommendations and below connector mutations. The browser can view, propose, and request authorized decisions, but does not receive privileged connector credentials. Live execution requires a trusted server or Edge Function adapter. Staging uses only `SandboxConnectorAdapter` and marks every result `SIMULATED`.
+
+Tenant-scoped orchestration tables preserve policies, actions, approvals, executions, rollback, circuit breakers, and notifications. RLS is authoritative, polymorphic targets are validated against their tenant, and append-only outcome tables are mutated only through checked database functions or trusted services.
+
+The AI provider abstraction remains advisory: AI output enters the recommendation layer and cannot call a connector directly.
