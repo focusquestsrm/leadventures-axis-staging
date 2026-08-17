@@ -2,6 +2,23 @@
 -- External credentials remain server-side. Browser callers may approve records,
 -- but only trusted execution functions/adapters may perform connector mutations.
 
+-- Some staging projects were provisioned before the direct-role helper was
+-- included in the Release 1 foundation. Restore the exact schema contract here
+-- before Release 8 policies and RPCs depend on it.
+create or replace function public.axis_has_direct_tenant_role(requested_tenant uuid, allowed_roles public.axis_role[])
+returns boolean language sql stable security definer set search_path=public as $$
+  select exists(
+    select 1
+    from public.tenant_memberships
+    where tenant_id=requested_tenant
+      and user_id=auth.uid()
+      and status='active'
+      and role=any(allowed_roles)
+  )
+$$;
+revoke all on function public.axis_has_direct_tenant_role(uuid,public.axis_role[]) from public;
+grant execute on function public.axis_has_direct_tenant_role(uuid,public.axis_role[]) to authenticated;
+
 create or replace function public.axis_automation_json_is_safe(value jsonb)
 returns boolean language plpgsql immutable set search_path=public as $$
 declare item record;

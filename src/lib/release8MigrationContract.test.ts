@@ -13,6 +13,12 @@ describe('Release 8 orchestration migration contract', () => {
   it('guards relational and polymorphic targets by tenant', () => { for (const target of ['media_campaigns', 'buyers', 'lead_recoveries', 'recommendations', 'experiments', 'integrations']) expect(sql).toContain(`from public.${target} where id=new.target_id and tenant_id=new.tenant_id`) })
   it('keeps approvals, execution, rollback, and switches behind functions', () => { for (const fn of ['axis_decide_automation_action', 'axis_simulate_automation_action', 'axis_request_automation_rollback', 'axis_set_automation_kill_switch', 'axis_set_platform_automation_control']) expect(sql).toContain(`function public.${fn}`) })
   it('limits media buyer execution to Acquire', () => { expect(sql).toContain("action_row.engine='acquire'"); expect(sql).toContain("engine='acquire' and public.axis_has_direct_tenant_role") })
+  it('restores the exact direct tenant role helper before Release 8 policies use it', () => {
+    const helper = 'create or replace function public.axis_has_direct_tenant_role(requested_tenant uuid, allowed_roles public.axis_role[])'
+    expect(sql).toContain(helper)
+    expect(sql.indexOf(helper)).toBeLessThan(sql.indexOf('create policy automation_actions_create'))
+    expect(sql).toContain('grant execute on function public.axis_has_direct_tenant_role(uuid,public.axis_role[]) to authenticated')
+  })
   it('preserves append-only execution outcomes', () => { expect(sql).not.toContain('grant update on public.automation_executions'); expect(sql).not.toContain('grant delete on public.automation_executions') })
   it('records semantic automation audit events', () => { expect(sql).toContain("'automation.action_'||p_decision"); for (const event of ['automation.action_executed', 'automation.action_blocked', 'automation.rollback_completed', 'automation.kill_switch_enabled', 'automation.platform_suspension_changed']) expect(sql).toContain(event) })
   it('keeps live mutation outside the browser', () => { expect(sql).toContain('live execution requires a trusted server adapter'); expect(sql).toContain('staging-only simulated execution') })
