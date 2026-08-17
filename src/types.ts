@@ -5,7 +5,8 @@ export type Permission =
   | 'lead:read' | 'lead:write' | 'lead:identity:read'
   | 'buyer:read' | 'buyer:write' | 'offer:read' | 'offer:write'
   | 'source:read' | 'source:write' | 'delivery:read' | 'delivery:write' | 'capacity:read' | 'capacity:write'
-  | 'integration:read' | 'integration:manage' | 'recovery:read' | 'recovery:manage' | 'recovery:approve' | 'audit:read' | 'platform:manage'
+  | 'integration:read' | 'integration:manage' | 'recovery:read' | 'recovery:manage' | 'recovery:approve'
+  | 'optimization:read' | 'optimization:manage' | 'optimization:approve' | 'optimization:implement' | 'audit:read' | 'platform:manage'
 
 export type LeadStatus = 'new' | 'validated' | 'queued' | 'delivering' | 'accepted' | 'rejected' | 'recovered' | 'closed'
 export type DeliveryStatus = 'pending' | 'accepted' | 'rejected' | 'timeout' | 'error' | 'cancelled'
@@ -45,6 +46,18 @@ export interface LeadRecovery { id:string;tenantId:string;leadId:string;originat
 export interface RecoveryAttempt { id:string;tenantId:string;leadRecoveryId:string;leadId:string;buyerId:string|null;offerId:string|null;programId:string|null;recoveryPathId:string|null;pathType:RecoveryPathType;attemptNumber:number;status:'pending'|'eligible'|'attempted'|'accepted'|'rejected'|'skipped'|'blocked'|'timeout'|'error';deliveryAttemptId:string|null;transactionKey:string;startedAt:string|null;completedAt:string|null;reason:string;explanation:string[];estimatedValue:number|null;actualValue:number|null;incrementalCost:number|null;createdAt:string }
 export interface RecoveryReview { id:string;tenantId:string;leadRecoveryId:string;leadId:string;reasonCode:string;safeReason:string;status:'open'|'approved'|'blocked'|'resolved';selectedPathId:string|null;resolvedBy:string|null;resolvedAt:string|null;createdAt:string }
 export interface RecoveryEvent { id:string;tenantId:string;leadRecoveryId:string;leadId:string;eventType:string;safeDetail:string;occurredAt:string }
+export type ConfidenceLevel='low'|'medium'|'high'
+export type DataFreshness='fresh'|'delayed'|'stale'|'unknown'
+export type RecommendationStatus='new'|'reviewed'|'approved'|'rejected'|'implemented'|'expired'|'dismissed'
+export type RecommendationPriority='low'|'medium'|'high'|'critical'
+export type RecommendationType='pacing'|'buyer'|'campaign'|'program'|'recovery'|'capacity'|'integration'|'data_quality'|'economic'
+export interface OptimizationSettings { id:string;tenantId:string;minimumSampleSize:number;highConfidenceSampleSize:number;anomalySensitivity:number;pacingThreshold:number;forecastMethod:'trailing_average'|'weighted_moving_average';recommendationExpirationDays:number;economicCurrency:string;updatedAt:string }
+export interface MetricSnapshot { id:string;tenantId:string;snapshotDate:string;dimensionType:'tenant'|'buyer'|'program'|'campaign'|'recovery';dimensionId:string|null;leads:number;accepted:number;rejected:number;recoverable:number;recovered:number;timeouts:number;responseTimeMs:number|null;qualified:number;applicationsSales:number;conversions:number;startsCompletions:number;spend:number|null;revenue:number|null;recoveryRevenue:number|null;deliveryCost:number|null;createdAt:string }
+export interface Forecast { id:string;tenantId:string;metricKey:string;dimensionType:string;dimensionId:string|null;horizon:'end_of_day'|'next_7_days'|'cap_period_end'|'month_end';method:string;modelVersion:string;sampleSize:number;confidence:ConfidenceLevel;forecastValue:number|null;generatedFor:string;generatedAt:string;expiresAt:string|null }
+export interface ForecastResult { id:string;tenantId:string;forecastId:string;actualValue:number;error:number;absoluteError:number;percentageError:number|null;measuredAt:string }
+export interface OptimizationAnomaly { id:string;tenantId:string;metricKey:string;dimensionType:string;dimensionId:string|null;status:'active'|'resolved'|'dismissed';severity:RecommendationPriority;currentValue:number;baselineValue:number;changePercent:number|null;threshold:number;confidence:ConfidenceLevel;sampleSize:number;likelyDriver:string|null;safeExplanation:string;detectedAt:string;resolvedAt:string|null }
+export interface Recommendation { id:string;tenantId:string;recommendationType:RecommendationType;title:string;summary:string;status:RecommendationStatus;priority:RecommendationPriority;confidence:ConfidenceLevel;sampleSize:number;evidence:string[];estimatedImpact:Record<string,number|null>;relatedBuyerId:string|null;relatedProgramId:string|null;relatedCampaignId:string|null;relatedLeadId:string|null;freshness:DataFreshness;freshnessWarning:string|null;generatedAt:string;expiresAt:string|null;createdAt:string;updatedAt:string }
+export interface RecommendationAction { id:string;tenantId:string;recommendationId:string;actionType:'reviewed'|'approved'|'rejected'|'dismissed'|'implemented';status:'recorded'|'completed';actedBy:string|null;actedAt:string;notes:string;expectedImpact:Record<string,number|null>;actualImpact:Record<string,number|null>|null;beforeMetrics:Record<string,number|null>;afterMetrics:Record<string,number|null>|null;createdAt:string }
 export interface TenantSetting { id: string; tenantId: string; key: string; value: string }
 export interface AuditEvent { id: string; tenantId: string | null; actor: string; eventType: string; entityType: string; entityId: string; occurredAt: string }
 export interface SessionUser { id: string; name: string; email: string; isPlatformAdmin: boolean }

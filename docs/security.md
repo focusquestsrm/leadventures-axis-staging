@@ -66,3 +66,11 @@ Recovery policies, paths, workflows, attempts, reviews, and events are tenant-ow
 Consent status and secondary-delivery permission are hard approval gates when a policy requires confirmation. Compliance-sensitive categories are blocked by default, and unknown categories require manual review. The original buyer and already-attempted destinations are excluded by deterministic eligibility. Repeated workflows, attempts, and queued/terminal decisions have idempotency controls.
 
 Authenticated application users cannot update or delete recovery events. Safe details and metadata are length-bounded and audited without row content. Identity fields, raw payloads, lead-bearing URLs, authorization tokens, JWTs, connector secrets, and service-role keys are prohibited from recovery records, diagnostics, and intelligence responses.
+
+## Optimize security
+
+Optimization records are tenant-owned, RLS-protected, and covered by relationship guards and generic PII-safe audit triggers. Tenant members may read aggregate optimization data. Tenant administrators and managers may manage settings and evidence records; analysts and viewers remain read-only. Media buyers may record implementation only for a previously approved recommendation.
+
+The decision RPC is tenant-authorized, idempotent, and preserves terminal states while appending action history. It accepts only length-bounded safe notes. Recommendation evidence and impact JSON are type- and size-bounded. Snapshot uniqueness treats a null tenant dimension as one stable idempotency scope.
+
+The optimization context excludes email, phone, address, name, auth tokens, JWTs, raw lead payloads, and credentials. The external AI provider boundary is inactive. No recommendation authorizes autonomous changes to budgets, bids, caps, routing, campaigns, or external systems.

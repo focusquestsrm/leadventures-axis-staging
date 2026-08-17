@@ -66,7 +66,8 @@ function NavItem({ to, label, icon: Icon, onClick }: { to: string; label: string
 }
 
 export function PageHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description: string; action?: ReactNode }) {
-  return <div className="page-header"><div>{eyebrow && <span className="eyebrow">{eyebrow}</span>}<h1>{title}</h1><p>{description}</p></div>{action}</div>
+  const customerEyebrow = eyebrow?.replace(/\s*[·-]\s*release\s+\d+/gi, '').replace(/^release\s+\d+\s*[·-]\s*/i, '')
+  return <div className="page-header"><div>{customerEyebrow && <span className="eyebrow">{customerEyebrow}</span>}<h1>{title}</h1><p>{description}</p></div>{action}</div>
 }
 
 export function Status({ value }: { value: string }) {

@@ -55,3 +55,9 @@ The database stores mappings, batch/error/sync observability, explicit outcome t
 `src/recovery/domain.ts` owns deterministic recoverability, safety gates, destination eligibility, and ranking. `src/services/recoveryService.ts` is the data boundary; recovery pages never query Supabase directly. Recovery workflows reference the exact lead and originating rejection while ordered recovery attempts optionally reference the trusted R2 delivery attempt that executed them. This preserves primary delivery history and keeps recovery visually and structurally distinct.
 
 Approval is a state transition to `queued`, not a browser delivery operation. A future trusted server-side executor can consume queued work after revalidating tenant policy, consent, caps, buyer eligibility, and idempotency. This boundary supports future schedulers, connector workers, external APIs, and auditable recommendation services without giving the browser credentials or autonomous delivery authority.
+
+## Optimize layer
+
+Economics, forecasting, anomaly, and recommendation rules live in isolated domain modules under `src/lib`. Thin service boundaries compose those rules and keep React free of database queries. `optimizationService` loads only the active tenant's aggregate operational records and uses the decision RPC for persisted recommendation transitions.
+
+The recommendation provider interface accepts a deliberately narrow, PII-safe aggregate context. The active implementation is deterministic. The inactive future-AI implementation throws until a trusted server-side provider, sanitization review, and explicit configuration exist. Browser code never receives provider credentials or sends identity data externally.

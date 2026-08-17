@@ -68,3 +68,17 @@ Source/campaign, buyer, and program scorecards inherit attribution from the matc
 | Downstream Conversions | Distinct recovered lead IDs with trusted enrollment, sale, or completed outcomes. | Zero when no matched downstream outcome exists. |
 
 Buyer recovery performance separates primary delivery volume from recovery attempts and acceptance. Program recovery performance reports rejection opportunity, attempts, recovered value, and the top accepted secondary buyer. Economic metrics never substitute zero for unknown payout, revenue, or cost.
+
+## Optimize metrics
+
+| Metric | Definition | Missing-data behavior |
+|---|---|---|
+| Cost per Lead | Spend / Leads. | Unavailable without authoritative spend or positive lead volume. |
+| Cost per Accepted Lead | Spend / Accepted Leads. | Unavailable without spend or accepted leads. |
+| Revenue per Lead | Trusted outcome and recovery revenue / Leads. | Unavailable without trusted revenue. |
+| Contribution | Revenue - Spend - complete delivery cost. | Unavailable if any required economic input is missing. |
+| Expected Lead Value | Acceptance probability x conversion probability x revenue per conversion - acquisition and incremental cost. | Unavailable below minimum samples or without authoritative costs/revenue. |
+| Required Daily Pace | Remaining cap / remaining period days. | Period-ended state when no days remain. |
+| Projected Delivery | Delivered + current daily pace x remaining period days. | Uses zero pace only when no delivery has occurred. |
+
+Tenant snapshots are the only portfolio-total input. Campaign, buyer, program, and recovery snapshots are comparison dimensions and are not summed into tenant totals.

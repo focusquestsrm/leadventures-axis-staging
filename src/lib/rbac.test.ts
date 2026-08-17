@@ -49,4 +49,14 @@ describe('centralized permissions', () => {
     expect(can('manager', 'recovery:approve')).toBe(true)
     expect(can('tenant_admin', 'recovery:manage')).toBe(true)
   })
+
+  it('keeps optimization approval centralized and human-controlled', () => {
+    expect(can('viewer', 'optimization:read')).toBe(true)
+    expect(can('viewer', 'optimization:approve')).toBe(false)
+    expect(can('analyst', 'optimization:approve')).toBe(false)
+    expect(can('media_buyer', 'optimization:implement')).toBe(true)
+    expect(can('media_buyer', 'optimization:approve')).toBe(false)
+    expect(can('manager', 'optimization:approve')).toBe(true)
+    expect(can('tenant_admin', 'optimization:manage')).toBe(true)
+  })
 })
