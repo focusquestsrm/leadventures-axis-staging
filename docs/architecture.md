@@ -61,3 +61,11 @@ Approval is a state transition to `queued`, not a browser delivery operation. A 
 Economics, forecasting, anomaly, and recommendation rules live in isolated domain modules under `src/lib`. Thin service boundaries compose those rules and keep React free of database queries. `optimizationService` loads only the active tenant's aggregate operational records and uses the decision RPC for persisted recommendation transitions.
 
 The recommendation provider interface accepts a deliberately narrow, PII-safe aggregate context. The active implementation is deterministic. The inactive future-AI implementation throws until a trusted server-side provider, sanitization review, and explicit configuration exist. Browser code never receives provider credentials or sends identity data externally.
+
+## Acquire layer
+
+Media adapters under `src/integrations/media` convert vendor exports into a common aggregate record. `acquisitionService` is the browser data boundary and applies an explicit tenant predicate to every connected query. `src/lib/acquisition.ts` owns economics, scorecards, fatigue, attribution, experiment comparison, capacity context, and deterministic recommendations.
+
+The database canonicalizes platform hierarchy as Account -> Campaign -> Ad Group -> Ad -> Creative while retaining native external identifiers. Existing Axis campaigns and programs are optional relationships rather than duplicated business entities. Daily metric idempotency and tenant-scoped external uniqueness support safe repeated synchronization.
+
+OAuth exchange, token refresh, connector polling, and platform writes belong to a future trusted worker. Release 7 exposes no client credentials and performs no external media mutation.

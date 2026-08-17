@@ -74,3 +74,11 @@ Optimization records are tenant-owned, RLS-protected, and covered by relationshi
 The decision RPC is tenant-authorized, idempotent, and preserves terminal states while appending action history. It accepts only length-bounded safe notes. Recommendation evidence and impact JSON are type- and size-bounded. Snapshot uniqueness treats a null tenant dimension as one stable idempotency scope.
 
 The optimization context excludes email, phone, address, name, auth tokens, JWTs, raw lead payloads, and credentials. The external AI provider boundary is inactive. No recommendation authorizes autonomous changes to budgets, bids, caps, routing, campaigns, or external systems.
+
+## Acquire security
+
+All media accounts, campaigns, ad groups, ads, creatives, metrics, sync runs, landing pages, attribution touches, experiments, and variants carry a non-null tenant ID. RLS authorizes reads through active tenant membership. Tenant administrators, managers, and media buyers may manage acquisition operations; analysts and viewers are read-only. Relationship triggers reject cross-tenant foreign keys.
+
+Access tokens, refresh tokens, client secrets, authorization codes, raw audience exports, customer lists, and credential payloads have no columns in the acquisition schema. Production credentials require encrypted server-side storage and must never use `VITE_` variables. The import RPC accepts normalized aggregates only, is size bounded, uses `SECURITY INVOKER`, and cannot change platform budgets.
+
+Attribution uses click/platform/UTM/Axis identifiers. Email, phone, name, and address are prohibited from acquisition analytics, destination references, audit metadata, and platform payloads. Audit triggers use the generic JSONB-safe capture function and record operations without row content.

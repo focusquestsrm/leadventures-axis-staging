@@ -82,3 +82,20 @@ Buyer recovery performance separates primary delivery volume from recovery attem
 | Projected Delivery | Delivered + current daily pace x remaining period days. | Uses zero pace only when no delivery has occurred. |
 
 Tenant snapshots are the only portfolio-total input. Campaign, buyer, program, and recovery snapshots are comparison dimensions and are not summed into tenant totals.
+
+## Acquire metrics
+
+| Metric | Definition | Missing-data behavior |
+|---|---|---|
+| CTR | Platform clicks / impressions. | Unavailable without impressions. |
+| CPC | Platform spend / clicks. | Unavailable without authoritative spend or clicks. |
+| CPM | Platform spend x 1,000 / impressions. | Unavailable without spend or impressions. |
+| Platform Conversion Rate | Platform-reported conversions / clicks. | Never relabeled as an Axis downstream conversion. |
+| CPL | Spend / Axis-attributed leads. | Unavailable without spend or leads. |
+| Cost per Accepted Lead | Spend / accepted Axis leads. | Unavailable without spend or accepted leads. |
+| Downstream Conversion Rate | Trusted Axis downstream conversions / Axis-attributed leads. | Zero only when leads exist and no matched outcome exists. |
+| Recovery Rate | Recovered leads / recoverable leads. | Unavailable without recoverable leads. |
+| Contribution | Trusted revenue - media spend - complete delivery cost. | Unavailable when any economic input is missing. |
+| Contribution per Lead | Contribution / Axis-attributed leads. | Unavailable without complete contribution or leads. |
+
+Platform metrics and Axis outcomes use the same canonical daily row only after deterministic acquisition linkage. They retain distinct field names and definitions.

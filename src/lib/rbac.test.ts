@@ -59,4 +59,14 @@ describe('centralized permissions', () => {
     expect(can('manager', 'optimization:approve')).toBe(true)
     expect(can('tenant_admin', 'optimization:manage')).toBe(true)
   })
+
+  it('gives media buyers operational Acquire capabilities while viewers remain read-only', () => {
+    expect(can('media_buyer', 'acquisition:manage')).toBe(true)
+    expect(can('media_buyer', 'acquisition:sync')).toBe(true)
+    expect(can('media_buyer', 'experiment:manage')).toBe(true)
+    expect(can('analyst', 'acquisition:read')).toBe(true)
+    expect(can('viewer', 'acquisition:read')).toBe(true)
+    expect(can('viewer', 'acquisition:manage')).toBe(false)
+    expect(can('viewer', 'acquisition:sync')).toBe(false)
+  })
 })

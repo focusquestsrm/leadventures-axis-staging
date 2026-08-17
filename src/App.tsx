@@ -4,15 +4,19 @@ import { IntelligenceProvider } from './context/IntelligenceContext'
 import { Shell } from './components/Shell'
 import { AdminPage, BuyersOffersPage } from './pages'
 import { BuyerDetailPage, BuyerEcosystemPanels, LeadDetailPage, LeadEcosystemPage } from './release2Pages'
-import { AcquireIntelligencePage, BuyerIntelligencePage, ConvertIntelligencePage, IntelligenceOverviewPage, ProgramIntelligencePage, RejectionIntelligencePage, RouteIntelligencePage } from './intelligencePages'
+import { BuyerIntelligencePage, ConvertIntelligencePage, IntelligenceOverviewPage, ProgramIntelligencePage, RejectionIntelligencePage, RouteIntelligencePage } from './intelligencePages'
 import { IntegrationDetailPage, IntegrationsHubPage, LeadHoopImportPage } from './integrationPages'
 import { RecoveryDashboardPage,RecoveryDetailPage,RecoveryReviewPage } from './recoveryPages'
 import { RecoveryAdministrationPage,RecoveryPathCreatePage } from './recoveryAdminPages'
 import { AnomaliesPage,BuyerOptimizationPanel,ForecastsPage,OptimizationBriefPage,OptimizeDashboardPage,PacingPage,ProgramOptimizationPanel,RecommendationDetailPage,RecommendationsPage } from './optimizePages'
+import { AcquireDashboardPage,AdGroupDetailPage,AdGroupScorecardPage,CampaignDetailPage,CampaignScorecardPage,ConvertAcquisitionPanel,CreativeDetailPage,CreativeScorecardPage,ExperimentsPage,MediaAccountDetailPage,MediaAccountsPanel,MediaImportFinalizePage,OptimizeAcquisitionPanel,SourceScorecardPage } from './acquirePages'
 
 function BuyersRelease2Page() { return <><BuyersOffersPage /><BuyerEcosystemPanels /></> }
 function BuyerDetailOptimizePage() { return <><BuyerDetailPage/><BuyerOptimizationPanel/></> }
 function ProgramIntelligenceOptimizePage() { return <><ProgramIntelligencePage/><ProgramOptimizationPanel/></> }
+function ConvertAcquirePage() { return <><ConvertIntelligencePage/><ConvertAcquisitionPanel/></> }
+function OptimizeAcquirePage() { return <><OptimizeDashboardPage/><OptimizeAcquisitionPanel/></> }
+function AcquireMediaPage() { return <><AcquireDashboardPage/><MediaAccountsPanel/></> }
 
 function ProtectedAdmin() {
   const { allowed } = useApp()
@@ -22,15 +26,23 @@ function ProtectedAdmin() {
 function AppRoutes() {
   return <Shell><Routes>
     <Route path="/" element={<IntelligenceOverviewPage />} />
-    <Route path="/acquire" element={<AcquireIntelligencePage />} />
-    <Route path="/convert" element={<ConvertIntelligencePage />} />
+    <Route path="/acquire" element={<AcquireMediaPage />} />
+    <Route path="/acquire/sources" element={<SourceScorecardPage />} />
+    <Route path="/acquire/campaigns" element={<CampaignScorecardPage />} />
+    <Route path="/acquire/campaigns/:campaignId" element={<CampaignDetailPage />} />
+    <Route path="/acquire/ad-groups" element={<AdGroupScorecardPage />} />
+    <Route path="/acquire/ad-groups/:adGroupId" element={<AdGroupDetailPage />} />
+    <Route path="/acquire/creatives" element={<CreativeScorecardPage />} />
+    <Route path="/acquire/creatives/:creativeId" element={<CreativeDetailPage />} />
+    <Route path="/acquire/experiments" element={<ExperimentsPage />} />
+    <Route path="/convert" element={<ConvertAcquirePage />} />
     <Route path="/route" element={<RouteIntelligencePage />} />
     <Route path="/recover" element={<RecoveryDashboardPage />} />
     <Route path="/recover/policies" element={<RecoveryAdministrationPage />} />
     <Route path="/recover/paths/new" element={<RecoveryPathCreatePage />} />
     <Route path="/recover/reviews" element={<RecoveryReviewPage />} />
     <Route path="/recover/:recoveryId" element={<RecoveryDetailPage />} />
-    <Route path="/optimize" element={<OptimizeDashboardPage />} />
+    <Route path="/optimize" element={<OptimizeAcquirePage />} />
     <Route path="/optimize/brief" element={<OptimizationBriefPage />} />
     <Route path="/optimize/recommendations" element={<RecommendationsPage />} />
     <Route path="/optimize/recommendations/:recommendationId" element={<RecommendationDetailPage />} />
@@ -47,6 +59,8 @@ function AppRoutes() {
     <Route path="/integrations" element={<IntegrationsHubPage />} />
     <Route path="/integrations/:integrationId" element={<IntegrationDetailPage />} />
     <Route path="/integrations/:integrationId/import" element={<LeadHoopImportPage />} />
+    <Route path="/integrations/:integrationId/media-import" element={<MediaImportFinalizePage />} />
+    <Route path="/integrations/media/:accountId" element={<MediaAccountDetailPage />} />
     <Route path="/admin" element={<ProtectedAdmin />} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></Shell>

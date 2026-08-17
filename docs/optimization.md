@@ -20,3 +20,7 @@ Pacing uses the configured cap, delivered count, elapsed days, and remaining per
 ## Data freshness
 
 Connected integrations are fresh through six hours, delayed through 24 hours, and stale afterward. Missing integration success timestamps produce unknown freshness. Delayed, stale, and unknown data visibly reduces decision confidence.
+
+## Acquisition signals
+
+Acquire supplies campaign spend, CPL, cost per accepted lead, downstream conversion, revenue per lead, contribution per lead, recovery economics, creative fatigue, and buyer-capacity context. Deterministic recommendations may preserve a higher-CPL/high-value campaign, warn about capacity risk, or request creative review. Stale media data produces a visible warning and reduced confidence. No recommendation executes a media change.

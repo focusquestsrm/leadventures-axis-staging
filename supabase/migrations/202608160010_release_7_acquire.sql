@@ -1,0 +1,115 @@
+-- Lead Ventures Axis Release 7: tenant-scoped acquisition intelligence.
+-- Credentials remain in trusted server-side storage; these tables contain metadata and aggregate performance only.
+
+create table public.media_accounts (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,integration_id uuid not null references public.integrations(id) on delete cascade,
+ platform text not null check(platform in ('meta','google_ads','tiktok')),external_account_id text not null,display_name text not null,currency text not null default 'USD' check(length(currency)=3),timezone text not null default 'UTC',
+ status text not null default 'not_connected' check(status in ('not_connected','configured','connected','error','token_expiring','disabled')),last_sync_at timestamptz,credentials_status text not null default 'not_configured' check(credentials_status in ('not_configured','configured','expiring','error')),
+ created_by uuid references public.profiles(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),unique(tenant_id,platform,external_account_id)
+);
+create table public.landing_pages (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,name text not null,url_reference text not null,status text not null default 'draft' check(status in ('draft','active','paused','archived')),variant text not null default '',program_id uuid references public.programs(id) on delete set null,offer_id uuid references public.offers(id) on delete set null,created_by uuid references public.profiles(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),unique(tenant_id,url_reference,variant)
+);
+create table public.media_campaigns (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,media_account_id uuid not null references public.media_accounts(id) on delete cascade,axis_campaign_id uuid references public.campaigns(id) on delete set null,program_id uuid references public.programs(id) on delete set null,
+ external_campaign_id text not null,name text not null,status text not null default 'unknown' check(status in ('active','paused','archived','removed','unknown')),objective text not null default '',start_date date,end_date date,daily_budget numeric(14,2),lifetime_budget numeric(14,2),currency text not null default 'USD' check(length(currency)=3),platform text not null check(platform in ('meta','google_ads','tiktok')),
+ created_by uuid references public.profiles(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),constraint media_campaign_budget_nonnegative check((daily_budget is null or daily_budget>=0) and (lifetime_budget is null or lifetime_budget>=0)),unique(tenant_id,media_account_id,external_campaign_id)
+);
+create table public.media_ad_groups (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,media_campaign_id uuid not null references public.media_campaigns(id) on delete cascade,external_id text not null,name text not null,status text not null default 'unknown' check(status in ('active','paused','archived','removed','unknown')),budget numeric(14,2),bid_strategy text not null default '',optimization_goal text not null default '',audience_summary text not null default '',created_by uuid references public.profiles(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),constraint media_ad_group_safe check((budget is null or budget>=0) and length(audience_summary)<=1000),unique(tenant_id,media_campaign_id,external_id)
+);
+create table public.media_creatives (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,platform text not null check(platform in ('meta','google_ads','tiktok')),external_creative_id text not null,name text not null,creative_type text not null check(creative_type in ('image','video','carousel','text','responsive','other')),headline text not null default '',description text not null default '',asset_reference text,landing_page_id uuid references public.landing_pages(id) on delete set null,status text not null default 'unknown' check(status in ('active','paused','archived','removed','unknown')),created_by uuid references public.profiles(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),constraint media_creative_safe check(length(headline)<=500 and length(description)<=1500),unique(tenant_id,platform,external_creative_id)
+);
+create table public.media_ads (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,media_ad_group_id uuid not null references public.media_ad_groups(id) on delete cascade,external_id text not null,name text not null,status text not null default 'unknown' check(status in ('active','paused','archived','removed','unknown')),creative_id uuid references public.media_creatives(id) on delete set null,destination_url_reference text,created_by uuid references public.profiles(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),constraint media_ad_destination_safe check(destination_url_reference is null or length(destination_url_reference)<=1000),unique(tenant_id,media_ad_group_id,external_id)
+);
+create table public.media_daily_metrics (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,media_account_id uuid not null references public.media_accounts(id) on delete cascade,media_campaign_id uuid references public.media_campaigns(id) on delete cascade,media_ad_group_id uuid references public.media_ad_groups(id) on delete cascade,media_ad_id uuid references public.media_ads(id) on delete cascade,media_creative_id uuid references public.media_creatives(id) on delete set null,metric_date date not null,idempotency_key text not null,
+ impressions bigint not null default 0,clicks bigint not null default 0,spend numeric(14,2),platform_conversions bigint not null default 0,reach bigint,frequency numeric(12,4),leads bigint not null default 0,validated_leads bigint not null default 0,accepted_leads bigint not null default 0,qualified_outcomes bigint not null default 0,applications_sales bigint not null default 0,downstream_conversions bigint not null default 0,starts_completions bigint not null default 0,rejected_leads bigint not null default 0,recoverable_leads bigint not null default 0,recovered_leads bigint not null default 0,recovered_revenue numeric(14,2),revenue numeric(14,2),delivery_cost numeric(14,2),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),
+ constraint media_metrics_nonnegative check(impressions>=0 and clicks>=0 and (spend is null or spend>=0) and platform_conversions>=0 and (reach is null or reach>=0) and (frequency is null or frequency>=0) and leads>=0 and validated_leads>=0 and accepted_leads>=0 and qualified_outcomes>=0 and applications_sales>=0 and downstream_conversions>=0 and starts_completions>=0 and rejected_leads>=0 and recoverable_leads>=0 and recovered_leads>=0 and (recovered_revenue is null or recovered_revenue>=0) and (revenue is null or revenue>=0) and (delivery_cost is null or delivery_cost>=0)),unique(tenant_id,idempotency_key)
+);
+create table public.media_sync_runs (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,integration_id uuid not null references public.integrations(id) on delete cascade,media_account_id uuid references public.media_accounts(id) on delete set null,status text not null check(status in ('running','completed','failed')),accounts_processed integer not null default 0,campaigns_processed integer not null default 0,ads_processed integer not null default 0,metrics_processed integer not null default 0,duration_ms integer,error_count integer not null default 0,started_at timestamptz not null default now(),completed_at timestamptz,created_by uuid references public.profiles(id),constraint media_sync_counts check(accounts_processed>=0 and campaigns_processed>=0 and ads_processed>=0 and metrics_processed>=0 and error_count>=0 and (duration_ms is null or duration_ms>=0))
+);
+create table public.lead_acquisition_attributions (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,lead_id uuid not null references public.leads(id) on delete cascade,media_campaign_id uuid references public.media_campaigns(id) on delete set null,media_ad_group_id uuid references public.media_ad_groups(id) on delete set null,media_ad_id uuid references public.media_ads(id) on delete set null,landing_page_id uuid references public.landing_pages(id) on delete set null,
+ utm_source text not null default '',utm_medium text not null default '',utm_campaign text not null default '',utm_content text not null default '',utm_term text not null default '',click_id text not null default '',platform_campaign_id text not null default '',platform_ad_group_id text not null default '',platform_ad_id text not null default '',attribution_model text not null default 'last_known_acquisition_touch' check(attribution_model='last_known_acquisition_touch'),attributed_at timestamptz not null,created_by uuid references public.profiles(id),created_at timestamptz not null default now(),
+ constraint attribution_safe_values check(length(utm_source)<=250 and length(utm_medium)<=250 and length(utm_campaign)<=500 and length(utm_content)<=500 and length(utm_term)<=500 and length(click_id)<=500),unique(tenant_id,lead_id,attributed_at)
+);
+create table public.experiments (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,name text not null,experiment_type text not null check(experiment_type in ('landing_page','creative','cta','other')),status text not null default 'draft' check(status in ('draft','running','completed','cancelled')),start_date date,end_date date,primary_metric text not null,secondary_metrics jsonb not null default '[]',minimum_sample_size integer not null default 100 check(minimum_sample_size between 10 and 1000000),created_by uuid references public.profiles(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),constraint experiment_metrics_array check(jsonb_typeof(secondary_metrics)='array' and pg_column_size(secondary_metrics)<=4096)
+);
+create table public.experiment_variants (
+ id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.tenants(id) on delete cascade,experiment_id uuid not null references public.experiments(id) on delete cascade,name text not null,landing_page_id uuid references public.landing_pages(id) on delete set null,creative_id uuid references public.media_creatives(id) on delete set null,visitors integer,leads integer not null default 0,accepted_leads integer not null default 0,downstream_conversions integer not null default 0,revenue numeric(14,2),contribution numeric(14,2),created_by uuid references public.profiles(id),created_at timestamptz not null default now(),updated_at timestamptz not null default now(),constraint experiment_variant_values check((visitors is null or visitors>=0) and leads>=0 and accepted_leads>=0 and downstream_conversions>=0 and (revenue is null or revenue>=0)),unique(tenant_id,experiment_id,name)
+);
+
+alter table public.recommendations drop constraint if exists recommendations_recommendation_type_check;
+alter table public.recommendations add constraint recommendations_recommendation_type_check check(recommendation_type in ('pacing','buyer','campaign','creative','program','recovery','capacity','integration','data_quality','economic'));
+
+create index media_accounts_tenant_platform_idx on public.media_accounts(tenant_id,platform,status);
+create index media_campaigns_tenant_account_idx on public.media_campaigns(tenant_id,media_account_id,status);
+create index media_campaigns_axis_idx on public.media_campaigns(tenant_id,axis_campaign_id);
+create index media_ad_groups_campaign_idx on public.media_ad_groups(tenant_id,media_campaign_id);
+create index media_ads_group_idx on public.media_ads(tenant_id,media_ad_group_id);
+create index media_creatives_tenant_platform_idx on public.media_creatives(tenant_id,platform,status);
+create index media_daily_metrics_campaign_date_idx on public.media_daily_metrics(tenant_id,media_campaign_id,metric_date desc);
+create index media_daily_metrics_creative_date_idx on public.media_daily_metrics(tenant_id,media_creative_id,metric_date desc);
+create index media_sync_runs_integration_idx on public.media_sync_runs(tenant_id,integration_id,started_at desc);
+create index acquisition_attribution_lead_idx on public.lead_acquisition_attributions(tenant_id,lead_id,attributed_at desc);
+create index experiments_tenant_status_idx on public.experiments(tenant_id,status,created_at desc);
+
+create or replace function public.axis_enforce_r7_tenant_fk() returns trigger language plpgsql set search_path=public as $$
+declare d jsonb:=to_jsonb(new);relation_id uuid;relation_name text;
+begin
+ foreach relation_name in array array['integration_id','media_account_id','axis_campaign_id','program_id','offer_id','media_campaign_id','landing_page_id','media_ad_group_id','creative_id','media_ad_id','lead_id','experiment_id'] loop
+  relation_id:=nullif(d->>relation_name,'')::uuid;continue when relation_id is null;
+  if relation_name='integration_id' and not exists(select 1 from public.integrations where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='media_account_id' and not exists(select 1 from public.media_accounts where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='axis_campaign_id' and not exists(select 1 from public.campaigns where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='program_id' and not exists(select 1 from public.programs where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='offer_id' and not exists(select 1 from public.offers where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='media_campaign_id' and not exists(select 1 from public.media_campaigns where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='landing_page_id' and not exists(select 1 from public.landing_pages where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='media_ad_group_id' and not exists(select 1 from public.media_ad_groups where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='creative_id' and not exists(select 1 from public.media_creatives where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='media_ad_id' and not exists(select 1 from public.media_ads where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='lead_id' and not exists(select 1 from public.leads where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';
+  elsif relation_name='experiment_id' and not exists(select 1 from public.experiments where id=relation_id and tenant_id=new.tenant_id) then raise exception 'Invalid tenant relationship';end if;
+ end loop;return new;
+end $$;
+
+do $$ declare table_name text;begin
+ foreach table_name in array array['media_accounts','landing_pages','media_campaigns','media_ad_groups','media_creatives','media_ads','media_daily_metrics','media_sync_runs','lead_acquisition_attributions','experiments','experiment_variants'] loop
+  execute format('alter table public.%I enable row level security',table_name);
+  execute format('create policy %I_read on public.%I for select to authenticated using(public.axis_is_tenant_member(tenant_id))',table_name,table_name);
+  execute format('create policy %I_insert on public.%I for insert to authenticated with check(public.axis_has_tenant_role(tenant_id,array[''tenant_admin'',''manager'',''media_buyer'']::public.axis_role[]))',table_name,table_name);
+  execute format('create policy %I_update on public.%I for update to authenticated using(public.axis_has_tenant_role(tenant_id,array[''tenant_admin'',''manager'',''media_buyer'']::public.axis_role[])) with check(public.axis_has_tenant_role(tenant_id,array[''tenant_admin'',''manager'',''media_buyer'']::public.axis_role[]))',table_name,table_name);
+  execute format('create policy %I_delete on public.%I for delete to authenticated using(public.axis_has_tenant_role(tenant_id,array[''tenant_admin'',''manager'']::public.axis_role[]))',table_name,table_name);
+  execute format('create trigger r7_%I_tenant_fk before insert or update on public.%I for each row execute function public.axis_enforce_r7_tenant_fk()',table_name,table_name);
+  execute format('create trigger audit_%I after insert or update or delete on public.%I for each row execute function public.axis_capture_audit_event()',table_name,table_name);
+ end loop;
+ foreach table_name in array array['media_accounts','landing_pages','media_campaigns','media_ad_groups','media_creatives','media_ads','media_daily_metrics','experiments','experiment_variants'] loop execute format('create trigger r7_%I_updated before update on public.%I for each row execute function public.axis_set_updated_at()',table_name,table_name);end loop;
+end $$;
+grant select,insert,update,delete on public.media_accounts,public.landing_pages,public.media_campaigns,public.media_ad_groups,public.media_creatives,public.media_ads,public.media_daily_metrics,public.media_sync_runs,public.lead_acquisition_attributions,public.experiments,public.experiment_variants to authenticated;
+
+create or replace function public.axis_finalize_media_import(p_tenant_id uuid,p_integration_id uuid,p_records jsonb) returns jsonb language plpgsql security invoker set search_path=public as $$
+declare item jsonb;account_id uuid;campaign_id uuid;ad_group_id uuid;creative_id uuid;ad_id uuid;processed integer:=0;platform_name text;
+begin
+ if not public.axis_has_tenant_role(p_tenant_id,array['tenant_admin','manager','media_buyer']::public.axis_role[]) then raise exception 'Insufficient acquisition permission' using errcode='42501';end if;
+ if not exists(select 1 from public.integrations where id=p_integration_id and tenant_id=p_tenant_id and category='media') then raise exception 'Invalid media integration';end if;
+ if jsonb_typeof(p_records)<>'array' or jsonb_array_length(p_records)>1000 then raise exception 'Media import must contain at most 1000 normalized records';end if;
+ for item in select value from jsonb_array_elements(p_records) loop
+  platform_name:=item->>'platform';if platform_name not in ('meta','google_ads','tiktok') then raise exception 'Invalid platform';end if;
+  insert into public.media_accounts(tenant_id,integration_id,platform,external_account_id,display_name,status,credentials_status) values(p_tenant_id,p_integration_id,platform_name,item->>'externalAccountId',item->>'externalAccountId','configured','configured') on conflict(tenant_id,platform,external_account_id) do update set integration_id=excluded.integration_id returning id into account_id;
+  insert into public.media_campaigns(tenant_id,media_account_id,external_campaign_id,name,status,currency,platform) values(p_tenant_id,account_id,item->>'externalCampaignId',item->>'campaignName','unknown',coalesce(nullif(item->>'currency',''),'USD'),platform_name) on conflict(tenant_id,media_account_id,external_campaign_id) do update set name=excluded.name,updated_at=now() returning id into campaign_id;
+  ad_group_id:=null;if coalesce(item->>'externalAdGroupId','')<>'' then insert into public.media_ad_groups(tenant_id,media_campaign_id,external_id,name) values(p_tenant_id,campaign_id,item->>'externalAdGroupId',coalesce(nullif(item->>'adGroupName',''),item->>'externalAdGroupId')) on conflict(tenant_id,media_campaign_id,external_id) do update set name=excluded.name,updated_at=now() returning id into ad_group_id;end if;
+  creative_id:=null;if coalesce(item->>'externalCreativeId','')<>'' then insert into public.media_creatives(tenant_id,platform,external_creative_id,name,creative_type) values(p_tenant_id,platform_name,item->>'externalCreativeId',coalesce(nullif(item->>'creativeName',''),item->>'externalCreativeId'),'other') on conflict(tenant_id,platform,external_creative_id) do update set name=excluded.name,updated_at=now() returning id into creative_id;end if;
+  ad_id:=null;if ad_group_id is not null and coalesce(item->>'externalAdId','')<>'' then insert into public.media_ads(tenant_id,media_ad_group_id,external_id,name,creative_id) values(p_tenant_id,ad_group_id,item->>'externalAdId',coalesce(nullif(item->>'adName',''),item->>'externalAdId'),creative_id) on conflict(tenant_id,media_ad_group_id,external_id) do update set name=excluded.name,creative_id=excluded.creative_id,updated_at=now() returning id into ad_id;end if;
+  insert into public.media_daily_metrics(tenant_id,media_account_id,media_campaign_id,media_ad_group_id,media_ad_id,media_creative_id,metric_date,idempotency_key,impressions,clicks,spend,platform_conversions,reach,frequency) values(p_tenant_id,account_id,campaign_id,ad_group_id,ad_id,creative_id,(item->>'metricDate')::date,item->>'idempotencyKey',coalesce((item->>'impressions')::bigint,0),coalesce((item->>'clicks')::bigint,0),nullif(item->>'spend','')::numeric,coalesce((item->>'platformConversions')::bigint,0),nullif(item->>'reach','')::bigint,nullif(item->>'frequency','')::numeric) on conflict(tenant_id,idempotency_key) do update set impressions=excluded.impressions,clicks=excluded.clicks,spend=excluded.spend,platform_conversions=excluded.platform_conversions,reach=excluded.reach,frequency=excluded.frequency,updated_at=now();processed:=processed+1;
+ end loop;
+ insert into public.media_sync_runs(tenant_id,integration_id,status,accounts_processed,campaigns_processed,metrics_processed,error_count,completed_at) values(p_tenant_id,p_integration_id,'completed',1,processed,processed,0,now());
+ return jsonb_build_object('status','completed','recordsProcessed',processed);
+end $$;
+grant execute on function public.axis_finalize_media_import(uuid,uuid,jsonb) to authenticated;
+comment on function public.axis_finalize_media_import is 'PII-free normalized media import. Does not accept or store credentials and does not change media budgets.';
