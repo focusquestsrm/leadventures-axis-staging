@@ -1,12 +1,12 @@
 import type { Permission, Role, TenantRole } from '../types'
 
 const grants: Record<Role, readonly Permission[]> = {
-  platform_admin: ['tenant:read', 'tenant:manage', 'membership:read', 'membership:manage', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'source:read', 'source:write', 'delivery:read', 'delivery:write', 'capacity:read', 'capacity:write', 'integration:read', 'integration:manage', 'audit:read', 'platform:manage'],
-  tenant_admin: ['tenant:read', 'tenant:manage', 'membership:read', 'membership:manage', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'source:read', 'source:write', 'delivery:read', 'delivery:write', 'capacity:read', 'capacity:write', 'integration:read', 'integration:manage', 'audit:read'],
-  manager: ['tenant:read', 'membership:read', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'source:read', 'source:write', 'delivery:read', 'delivery:write', 'capacity:read', 'capacity:write', 'integration:read', 'audit:read'],
-  media_buyer: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'source:read', 'source:write', 'delivery:read', 'capacity:read', 'integration:read'],
-  analyst: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'source:read', 'delivery:read', 'capacity:read', 'integration:read', 'audit:read'],
-  viewer: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'source:read', 'delivery:read', 'capacity:read', 'integration:read'],
+  platform_admin: ['tenant:read', 'tenant:manage', 'membership:read', 'membership:manage', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'source:read', 'source:write', 'delivery:read', 'delivery:write', 'capacity:read', 'capacity:write', 'integration:read', 'integration:manage', 'recovery:read', 'recovery:manage', 'recovery:approve', 'audit:read', 'platform:manage'],
+  tenant_admin: ['tenant:read', 'tenant:manage', 'membership:read', 'membership:manage', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'source:read', 'source:write', 'delivery:read', 'delivery:write', 'capacity:read', 'capacity:write', 'integration:read', 'integration:manage', 'recovery:read', 'recovery:manage', 'recovery:approve', 'audit:read'],
+  manager: ['tenant:read', 'membership:read', 'lead:read', 'lead:write', 'lead:identity:read', 'buyer:read', 'buyer:write', 'offer:read', 'offer:write', 'source:read', 'source:write', 'delivery:read', 'delivery:write', 'capacity:read', 'capacity:write', 'integration:read', 'recovery:read', 'recovery:manage', 'recovery:approve', 'audit:read'],
+  media_buyer: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'source:read', 'source:write', 'delivery:read', 'capacity:read', 'integration:read', 'recovery:read'],
+  analyst: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'source:read', 'delivery:read', 'capacity:read', 'integration:read', 'recovery:read', 'audit:read'],
+  viewer: ['tenant:read', 'lead:read', 'buyer:read', 'offer:read', 'source:read', 'delivery:read', 'capacity:read', 'integration:read', 'recovery:read'],
 }
 
 export const can = (role: Role | undefined, permission: Permission, isPlatformAdmin = false) =>

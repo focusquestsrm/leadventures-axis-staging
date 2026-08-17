@@ -40,4 +40,13 @@ describe('centralized permissions', () => {
     expect(can('media_buyer', 'source:write')).toBe(true)
     expect(can('media_buyer', 'delivery:write')).toBe(false)
   })
+
+  it('keeps Release 5 recovery decisions capability-gated', () => {
+    expect(can('viewer', 'recovery:read')).toBe(true)
+    expect(can('viewer', 'recovery:approve')).toBe(false)
+    expect(can('analyst', 'recovery:manage')).toBe(false)
+    expect(can('media_buyer', 'recovery:approve')).toBe(false)
+    expect(can('manager', 'recovery:approve')).toBe(true)
+    expect(can('tenant_admin', 'recovery:manage')).toBe(true)
+  })
 })

@@ -4,8 +4,10 @@ import { IntelligenceProvider } from './context/IntelligenceContext'
 import { Shell } from './components/Shell'
 import { AdminPage, BuyersOffersPage } from './pages'
 import { BuyerDetailPage, BuyerEcosystemPanels, LeadDetailPage, LeadEcosystemPage } from './release2Pages'
-import { AcquireIntelligencePage, BuyerIntelligencePage, ConvertIntelligencePage, IntelligenceOverviewPage, OptimizeIntelligencePage, ProgramIntelligencePage, RecoverIntelligencePage, RejectionIntelligencePage, RouteIntelligencePage } from './intelligencePages'
+import { AcquireIntelligencePage, BuyerIntelligencePage, ConvertIntelligencePage, IntelligenceOverviewPage, OptimizeIntelligencePage, ProgramIntelligencePage, RejectionIntelligencePage, RouteIntelligencePage } from './intelligencePages'
 import { IntegrationDetailPage, IntegrationsHubPage, LeadHoopImportPage } from './integrationPages'
+import { RecoveryDashboardPage,RecoveryDetailPage,RecoveryReviewPage } from './recoveryPages'
+import { RecoveryAdministrationPage,RecoveryPathCreatePage } from './recoveryAdminPages'
 
 function BuyersRelease2Page() { return <><BuyersOffersPage /><BuyerEcosystemPanels /></> }
 
@@ -20,7 +22,11 @@ function AppRoutes() {
     <Route path="/acquire" element={<AcquireIntelligencePage />} />
     <Route path="/convert" element={<ConvertIntelligencePage />} />
     <Route path="/route" element={<RouteIntelligencePage />} />
-    <Route path="/recover" element={<RecoverIntelligencePage />} />
+    <Route path="/recover" element={<RecoveryDashboardPage />} />
+    <Route path="/recover/policies" element={<RecoveryAdministrationPage />} />
+    <Route path="/recover/paths/new" element={<RecoveryPathCreatePage />} />
+    <Route path="/recover/reviews" element={<RecoveryReviewPage />} />
+    <Route path="/recover/:recoveryId" element={<RecoveryDetailPage />} />
     <Route path="/optimize" element={<OptimizeIntelligencePage />} />
     <Route path="/intelligence/buyers" element={<BuyerIntelligencePage />} />
     <Route path="/intelligence/programs" element={<ProgramIntelligencePage />} />

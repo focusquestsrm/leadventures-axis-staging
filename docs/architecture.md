@@ -49,3 +49,9 @@ Create forward-only, timestamped SQL migrations in `supabase/migrations`. Review
 `src/integrations` owns canonical adapter contracts, parsing, normalization, and deterministic matching. `src/services/integrationService.ts` is the only browser data boundary for integration operations. Vendor adapters produce a canonical record and structured safe issues; pages contain no vendor translation logic.
 
 The database stores mappings, batch/error/sync observability, explicit outcome taxonomy mappings, and downstream outcome lineage. Trusted finalization is transactional, `SECURITY INVOKER`, manager-authorized, size bounded, and idempotent. `axis_outcome_intelligence_snapshot` adds tenant-scoped downstream aggregates to the existing R3 report without accessing identity tables.
+
+## Release 5 recovery layer
+
+`src/recovery/domain.ts` owns deterministic recoverability, safety gates, destination eligibility, and ranking. `src/services/recoveryService.ts` is the data boundary; recovery pages never query Supabase directly. Recovery workflows reference the exact lead and originating rejection while ordered recovery attempts optionally reference the trusted R2 delivery attempt that executed them. This preserves primary delivery history and keeps recovery visually and structurally distinct.
+
+Approval is a state transition to `queued`, not a browser delivery operation. A future trusted server-side executor can consume queued work after revalidating tenant policy, consent, caps, buyer eligibility, and idempotency. This boundary supports future schedulers, connector workers, external APIs, and auditable recommendation services without giving the browser credentials or autonomous delivery authority.

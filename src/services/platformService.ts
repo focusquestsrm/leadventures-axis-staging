@@ -5,6 +5,7 @@ import { auditEventSelect, membershipSelect } from './queryContracts'
 import { release2Demo } from '../data/release2Demo'
 import { release3Demo } from '../data/release3Demo'
 import { release4Demo } from '../data/release4Demo'
+import { release5Demo } from '../data/release5Demo'
 
 export interface PlatformSnapshot {
   user: SessionUser
@@ -57,6 +58,7 @@ const initialSnapshot: PlatformSnapshot = {
     { id: 'l4', tenantId: tenantA, reference: 'AX-20478', externalLeadId: 'SYN-LEAD-20478', trafficSourceId: 'ts1', campaignId: 'c1', programId: 'p1', offerId: 'o1', program: 'Medical Assistant', source: 'Meta', campaign: 'Healthcare Careers', offer: 'Qualified Healthcare Inquiry', status: 'queued', score: 72, receivedAt: '2026-08-16T12:20:00.000Z', createdAt: '2026-08-16T12:20:00.000Z' },
     { id: 'l5', tenantId: tenantB, reference: 'AX-10012', externalLeadId: 'SYN-LEAD-10012', trafficSourceId: null, campaignId: null, programId: null, offerId: null, program: 'Unassigned', source: 'Organic', campaign: 'Unassigned', offer: 'Unassigned', status: 'new', score: 72, receivedAt: '2026-08-15T12:20:00.000Z', createdAt: '2026-08-15T12:20:00.000Z' },
     ...release3Demo.leads,
+    ...release5Demo.leads,
   ],
   leadIdentities: release2Demo.leadIdentities,
   programs: [
@@ -78,15 +80,15 @@ const initialSnapshot: PlatformSnapshot = {
   buyerRules: release2Demo.buyerRules,
   buyerCaps: release2Demo.buyerCaps,
   leadDeliveries: [...release2Demo.leadDeliveries, ...release3Demo.leadDeliveries],
-  deliveryAttempts: [...release2Demo.deliveryAttempts, ...release3Demo.deliveryAttempts],
-  leadRejections: [...release2Demo.leadRejections, ...release3Demo.leadRejections],
-  leadStatusHistory: [...release2Demo.leadStatusHistory, ...release3Demo.leadStatusHistory],
+  deliveryAttempts: [...release2Demo.deliveryAttempts, ...release3Demo.deliveryAttempts, ...release5Demo.primaryDeliveryAttempts, ...release5Demo.deliveryAttempts],
+  leadRejections: [...release2Demo.leadRejections, ...release3Demo.leadRejections, ...release5Demo.rejections],
+  leadStatusHistory: [...release2Demo.leadStatusHistory, ...release3Demo.leadStatusHistory, ...release5Demo.leadStatusHistory],
   integrations: [
     { id: 'i-leadhoop', tenantId: tenantA, name: 'LeadHoop Distribution', kind: 'Lead distribution', category: 'lead_distribution', vendor: 'LeadHoop', status: 'connected', lastSyncAt: now, lastSuccessAt: now, recordsProcessed: 6, errorCount: 1, health: 'healthy', updatedAt: now },
     { id: 'i-crm', tenantId: tenantA, name: 'Synthetic CRM Outcomes', kind: 'CRM', category: 'crm', vendor: 'Generic CRM', status: 'connected', lastSyncAt: '2026-08-16T15:05:00.000Z', lastSuccessAt: '2026-08-16T15:05:00.000Z', recordsProcessed: 7, errorCount: 0, health: 'healthy', updatedAt: '2026-08-16T15:05:00.000Z' },
     { id: 'i2', tenantId: tenantA, name: 'Webhook Delivery', kind: 'Webhook', category: 'webhook', vendor: 'Custom', status: 'needs_attention', lastSyncAt: '2026-08-14T18:20:00.000Z', lastSuccessAt: null, recordsProcessed: 0, errorCount: 2, health: 'attention', updatedAt: '2026-08-14T18:20:00.000Z' },
   ],
-  leadOutcomes: release4Demo.outcomes,
+  leadOutcomes: [...release4Demo.outcomes,...release5Demo.outcomes],
   tenantSettings: [
     { id: 's1', tenantId: tenantA, key: 'locale', value: 'en-US' },
     { id: 's2', tenantId: tenantA, key: 'reporting_timezone', value: 'America/New_York' },

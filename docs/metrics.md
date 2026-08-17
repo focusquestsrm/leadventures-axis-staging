@@ -52,3 +52,19 @@ Outcome metrics count distinct matched leads in the selected lead cohort. An out
 | Revenue per Accepted Lead | Outcome Revenue / accepted selected leads. | Unavailable without outcome revenue or accepted leads. |
 
 Source/campaign, buyer, and program scorecards inherit attribution from the matched operational lead and optional outcome dimensions. Lead cost and gross contribution remain unsupported until authoritative acquisition cost exists.
+
+## Release 5 recovery metrics
+
+| Metric | Definition | Missing-data behavior |
+|---|---|---|
+| Rejected Leads | Tenant rejection records in the selected recovery scope. | Zero when none exist. |
+| Recoverable Leads | Recovery workflows not blocked or cancelled. | Based on stored, explainable eligibility; never inferred from reason text. |
+| Recovery Attempts | Ordered recovery-attempt records. | Pending records remain visible; attempted-workflow rate excludes pending, eligible, skipped, and blocked records. |
+| Recovered Leads | Recovery workflows with status `recovered`. | No inference from a primary acceptance. |
+| Recovery Rate | Recovered workflows / workflows with an executed recovery attempt × 100. | Unavailable when no workflow has an executed attempt. |
+| Recovered Revenue | Sum of non-null `recovery_value` for recovered workflows. | Unavailable when no recovered workflow has trusted value. |
+| Average Recovery Value | Recovered Revenue / Recovered Leads. | Unavailable without recovered revenue or recovered leads. |
+| Recovery Contribution | Recovered Revenue − complete incremental recovery costs. | Unavailable unless every recovered workflow has authoritative cost. |
+| Downstream Conversions | Distinct recovered lead IDs with trusted enrollment, sale, or completed outcomes. | Zero when no matched downstream outcome exists. |
+
+Buyer recovery performance separates primary delivery volume from recovery attempts and acceptance. Program recovery performance reports rejection opportunity, attempts, recovered value, and the top accepted secondary buyer. Economic metrics never substitute zero for unknown payout, revenue, or cost.

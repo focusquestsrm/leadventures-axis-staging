@@ -5,7 +5,7 @@ export type Permission =
   | 'lead:read' | 'lead:write' | 'lead:identity:read'
   | 'buyer:read' | 'buyer:write' | 'offer:read' | 'offer:write'
   | 'source:read' | 'source:write' | 'delivery:read' | 'delivery:write' | 'capacity:read' | 'capacity:write'
-  | 'integration:read' | 'integration:manage' | 'audit:read' | 'platform:manage'
+  | 'integration:read' | 'integration:manage' | 'recovery:read' | 'recovery:manage' | 'recovery:approve' | 'audit:read' | 'platform:manage'
 
 export type LeadStatus = 'new' | 'validated' | 'queued' | 'delivering' | 'accepted' | 'rejected' | 'recovered' | 'closed'
 export type DeliveryStatus = 'pending' | 'accepted' | 'rejected' | 'timeout' | 'error' | 'cancelled'
@@ -36,6 +36,15 @@ export interface IntegrationImportError { id: string; tenantId: string; integrat
 export interface IntegrationSyncRun { id: string; tenantId: string; integrationId: string; status: 'running' | 'completed' | 'failed'; recordsProcessed: number; recordsCreated: number; recordsUpdated: number; recordsSkipped: number; recordsErrored: number; durationMs: number | null; startedAt: string; completedAt: string | null }
 export interface LeadOutcome { id: string; tenantId: string; leadId: string; integrationId: string; importBatchId: string | null; externalOutcomeId: string; outcomeType: OutcomeType; outcomeStage: string; status: string; occurredAt: string; monetaryValue: number | null; currency: string; programId: string | null; buyerId: string | null; sourceSystem: string; externalRecordId: string; ingestedAt: string; createdAt: string }
 export interface OutcomeMapping { id: string; tenantId: string; integrationId: string; externalValue: string; outcomeType: OutcomeType; outcomeStage: string; active: boolean; updatedAt: string }
+export type RecoveryExecutionMode = 'advisory' | 'approval_required' | 'automatic'
+export type RecoveryPathType = 'host_post' | 'secondary_buyer' | 'link_out' | 'offer_wall' | 'manual_review'
+export type RecoveryStatus = 'eligible' | 'queued' | 'in_progress' | 'recovered' | 'exhausted' | 'blocked' | 'manual_review' | 'cancelled'
+export interface RecoveryPolicy { id:string;tenantId:string;name:string;status:'active'|'paused';priority:number;rejectionCategory:string;programId:string|null;offerId:string|null;sourceBuyerId:string|null;maxAttempts:number;maxAttemptsPerBuyer:number;maxDestinations:number;maxLeadAgeMinutes:number;requireConsentConfirmation:boolean;allowSecondaryHostPost:boolean;allowLinkOut:boolean;executionMode:RecoveryExecutionMode;updatedAt:string }
+export interface RecoveryPath { id:string;tenantId:string;recoveryPolicyId:string;buyerId:string|null;offerId:string|null;programId:string|null;pathType:RecoveryPathType;priority:number;status:'active'|'paused';payoutOverride:number|null;destinationReference:string|null;updatedAt:string }
+export interface LeadRecovery { id:string;tenantId:string;leadId:string;originatingRejectionId:string;recoveryPolicyId:string;status:RecoveryStatus;executionMode:RecoveryExecutionMode;consentStatus:'confirmed'|'missing'|'not_required'|'blocked';consentScope:string;consentVersion:string;secondaryDeliveryAllowed:boolean;consentConfirmedAt:string|null;eligibilityCode:string;explanation:string[];recommendedPathId:string|null;idempotencyKey:string;startedAt:string|null;completedAt:string|null;recoveryValue:number|null;incrementalCost:number|null;currency:string;createdAt:string;updatedAt:string }
+export interface RecoveryAttempt { id:string;tenantId:string;leadRecoveryId:string;leadId:string;buyerId:string|null;offerId:string|null;programId:string|null;recoveryPathId:string|null;pathType:RecoveryPathType;attemptNumber:number;status:'pending'|'eligible'|'attempted'|'accepted'|'rejected'|'skipped'|'blocked'|'timeout'|'error';deliveryAttemptId:string|null;transactionKey:string;startedAt:string|null;completedAt:string|null;reason:string;explanation:string[];estimatedValue:number|null;actualValue:number|null;incrementalCost:number|null;createdAt:string }
+export interface RecoveryReview { id:string;tenantId:string;leadRecoveryId:string;leadId:string;reasonCode:string;safeReason:string;status:'open'|'approved'|'blocked'|'resolved';selectedPathId:string|null;resolvedBy:string|null;resolvedAt:string|null;createdAt:string }
+export interface RecoveryEvent { id:string;tenantId:string;leadRecoveryId:string;leadId:string;eventType:string;safeDetail:string;occurredAt:string }
 export interface TenantSetting { id: string; tenantId: string; key: string; value: string }
 export interface AuditEvent { id: string; tenantId: string | null; actor: string; eventType: string; entityType: string; entityId: string; occurredAt: string }
 export interface SessionUser { id: string; name: string; email: string; isPlatformAdmin: boolean }

@@ -58,3 +58,11 @@ All integration mappings, imports, syncs, errors, and outcomes have RLS plus ten
 Normalization allowlists operational fields and drops unmapped report columns. Raw files and submitted row bodies are not placed in database records, logs, errors, or audit metadata. Audit triggers record table operation and identifiers through the generic PII-safe audit function. Outcome intelligence is `SECURITY INVOKER`, tenant-authorized, read-only, and excludes identity data.
 
 Connector credentials and webhook signing secrets require server-side provisioning. The browser UI deliberately contains no password/secret input and the application bundle uses no vendor secret or service-role environment variable.
+
+## Release 5 recovery security
+
+Recovery policies, paths, workflows, attempts, reviews, and events are tenant-owned and protected by RLS plus tenant-relationship triggers. Tenant members may read; only tenant administrators and managers may configure policies, create approved paths, or record decisions. Viewer, analyst, and media-buyer roles remain read-only for recovery.
+
+Consent status and secondary-delivery permission are hard approval gates when a policy requires confirmation. Compliance-sensitive categories are blocked by default, and unknown categories require manual review. The original buyer and already-attempted destinations are excluded by deterministic eligibility. Repeated workflows, attempts, and queued/terminal decisions have idempotency controls.
+
+Authenticated application users cannot update or delete recovery events. Safe details and metadata are length-bounded and audited without row content. Identity fields, raw payloads, lead-bearing URLs, authorization tokens, JWTs, connector secrets, and service-role keys are prohibited from recovery records, diagnostics, and intelligence responses.
